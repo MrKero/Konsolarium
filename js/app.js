@@ -1140,6 +1140,7 @@ function viewAbout(view) {
     </div>
     <h3 class="h3">${esc(t('about.versions'))}</h3>
     <div class="group">
+      <div class="src-item"><b>1.3.1 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.5'))}</span></div>
       <div class="src-item"><b>1.3.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.4'))}</span></div>
       <div class="src-item"><b>1.2.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.3'))}</span></div>
       <div class="src-item"><b>1.1.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.2'))}</span></div>

@@ -416,22 +416,38 @@ button.row:active, a.row:active { background: var(--surface2); }
 .src-item b { display: block; }
 .src-item span { font-size: 13px; color: var(--muted); }
 
-/* ---------- Tableiste ---------- */
+/* ---------- Tableiste: schwebende Glas-Kapsel ---------- */
 #tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-  display: flex; justify-content: center;
-  padding: 6px calc(var(--safe-r) + 10px) calc(var(--safe-b) + 6px) calc(var(--safe-l) + 10px);
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
-  border-top: 1px solid var(--line);
+  position: fixed; z-index: 20; left: 50%; bottom: max(12px, calc(var(--safe-b) - 6px)); transform: translateX(-50%);
+  width: min(calc(100% - var(--safe-l) - var(--safe-r) - 28px), 460px);
+  padding: 5px; border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 52%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8); backdrop-filter: blur(18px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.38), 0 2px 8px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
-#tabbar .tabs { display: flex; width: 100%; max-width: 560px; }
-#tabbar button { flex: 1; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 650; color: var(--muted); }
-#tabbar button svg { width: 24px; height: 24px; }
-#tabbar button[aria-current="page"] { color: var(--text); }
+#tabbar .tabs { display: flex; gap: 2px; width: 100%; }
+#tabbar button {
+  flex: 1; min-width: 0; height: 54px; border-radius: 999px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; font-size: 11px; font-weight: 650; color: var(--muted); transition: background-color 0.2s, color 0.2s;
+}
+#tabbar button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
+#tabbar button svg { width: 24px; height: 24px; flex: none; }
+#tabbar button[aria-current="page"] { color: var(--text); background: rgba(255, 255, 255, 0.1); }
 #tabbar button[aria-current="page"] svg { color: var(--gold); filter: drop-shadow(0 2px 6px rgba(255, 201, 74, 0.45)); }
+[data-theme="light"] #tabbar {
+  background: color-mix(in srgb, #ffffff 58%, transparent);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 34px rgba(40, 28, 100, 0.18), 0 2px 8px rgba(40, 28, 100, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+[data-theme="light"] #tabbar button[aria-current="page"] { background: rgba(40, 28, 100, 0.08); }
+[data-theme="light"] #tabbar button[aria-current="page"] svg { color: #c98a00; filter: none; }
+@media (prefers-reduced-transparency: reduce) {
+  #tabbar { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
 @media (orientation: landscape) and (max-height: 500px) {
   :root { --tabbar-h: 48px; }
+  #tabbar { width: min(calc(100% - var(--safe-l) - var(--safe-r) - 28px), 560px); }
   #tabbar button { height: 42px; flex-direction: row; gap: 6px; font-size: 13px; }
   #tabbar button svg { width: 20px; height: 20px; }
   .title-xl { font-size: 28px; }

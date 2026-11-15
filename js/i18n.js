@@ -2183,3 +2183,9 @@ function detectLang() {
 };
   for (const lang in T) { I18N[lang] = I18N[lang] || {}; K.forEach((k, i) => { I18N[lang][k] = T[lang][i]; }); }
 })();
+
+/* ---------- 1.3.1 ---------- */
+(function () {
+  const V = {"de": "Untere Leiste schwebt jetzt als durchscheinende Glas-Kapsel, Inhalte laufen sichtbar darunter weiter.", "en": "The bottom bar now floats as a translucent glass capsule; content stays visible as it scrolls underneath.", "tr": "Alt çubuk artık yarı saydam bir cam kapsül olarak süzülüyor; içerik altından görünerek kayıyor.", "es": "La barra inferior ahora flota como una cápsula de cristal translúcida; el contenido se ve al desplazarse por debajo.", "fr": "La barre du bas flotte désormais comme une capsule de verre translucide ; le contenu reste visible en défilant dessous.", "it": "La barra in basso ora fluttua come una capsula di vetro traslucida; i contenuti restano visibili scorrendo sotto.", "ru": "Нижняя панель теперь парит полупрозрачной стеклянной капсулой; содержимое видно, когда прокручивается под ней.", "ja": "下部のバーが半透明のガラス風カプセルとして浮かぶようになり、下をスクロールする内容が透けて見えます。", "ko": "하단 바가 반투명 유리 캡슐 형태로 떠 있으며, 아래로 스크롤되는 내용이 비쳐 보입니다.", "zh": "底部栏现在以半透明玻璃胶囊的形式悬浮，滚动的内容在其下方隐约可见。", "zht": "底部列現在以半透明玻璃膠囊的形式懸浮，捲動的內容在其下方隱約可見。", "ar": "الشريط السفلي يطفو الآن ككبسولة زجاجية شبه شفافة، ويظل المحتوى ظاهراً أثناء مروره من تحته.", "fa": "نوار پایین اکنون به شکل کپسول شیشه‌ای نیمه‌شفاف شناور است و محتوا هنگام عبور از زیر آن دیده می‌شود."};
+  for (const l in V) { I18N[l] = I18N[l] || {}; I18N[l]['ver.5'] = V[l]; }
+})();
