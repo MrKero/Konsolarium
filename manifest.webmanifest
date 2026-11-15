@@ -1,0 +1,17 @@
+{
+  "name": "Konsolarium",
+  "short_name": "Konsolarium",
+  "description": "Emulatoren von 1977 bis heute – offline und privat.",
+  "start_url": "./index.html#/systems",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#15122a",
+  "theme_color": "#15122a",
+  "lang": "de",
+  "icons": [
+    { "src": "icons/icon-cart-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-cart-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-cart-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

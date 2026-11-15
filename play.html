@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark" data-bg="plain">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Konsolarium">
+  <title>Konsolarium</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-cart-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-cart-180.png">
+  <link rel="stylesheet" href="css/app.css?v=1.3.0">
+  <link rel="stylesheet" href="css/play.css?v=1.3.0">
+  <link rel="stylesheet" href="css/pad.css?v=1.3.0">
+</head>
+<body class="player">
+  <header id="pbar">
+    <button class="pb" id="b-exit" aria-label="Exit"></button>
+    <div id="ptitle"><b></b><span></span></div>
+    <button class="pb wide" id="b-ff" aria-pressed="false"></button>
+    <button class="pb" id="b-qs"></button>
+    <button class="pb" id="b-menu"></button>
+  </header>
+  <div id="stage"><div id="game"></div><div id="pad"></div></div>
+  <div id="pmsg" hidden></div>
+  <script src="js/i18n.js?v=1.3.0"></script>
+  <script src="js/common.js?v=1.3.0"></script>
+  <script src="js/systems.js?v=1.3.0"></script>
+  <script src="js/art.js?v=1.3.0"></script>
+  <script src="js/pad.js?v=1.3.0"></script>
+  <script src="js/play.js?v=1.3.0"></script>
+</body>
+</html>
