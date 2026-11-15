@@ -1,0 +1,92 @@
+/* Konsolarium – Spieler */
+
+body.player { background: #0b0a14; color: #f2efff; overflow: hidden; position: fixed; inset: 0; }
+body.player #toast { bottom: calc(var(--safe-b) + 22px); }
+
+#pbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+  height: calc(var(--safe-t) + 50px);
+  padding: calc(var(--safe-t) + 6px) calc(var(--safe-r) + 10px) 6px calc(var(--safe-l) + 10px);
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(#0b0a14 70%, rgba(11, 10, 20, 0.85));
+}
+.pb {
+  height: 38px; min-width: 38px; padding: 0 10px; border-radius: 19px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(255, 255, 255, 0.09); color: #f2efff; font-weight: 750; font-size: 14px; flex: none;
+}
+.pb svg { width: 19px; height: 19px; }
+.pb:active { background: rgba(255, 255, 255, 0.18); }
+.pb[aria-pressed="true"] { background: #ffc94a; color: #2b1d00; }
+.pb[disabled] { opacity: 0.35; }
+#ptitle { flex: 1; min-width: 0; line-height: 1.15; }
+#ptitle b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ptitle span { display: block; font-size: 12px; color: #a29bcb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+#stage {
+  position: fixed; z-index: 1;
+  top: calc(var(--safe-t) + 50px); bottom: 0;
+  left: var(--safe-l); right: var(--safe-r);
+}
+#game { width: 100%; height: 100%; }
+
+@media (orientation: landscape) and (max-height: 520px) {
+  #pbar { height: 42px; padding-top: 4px; padding-bottom: 4px; background: linear-gradient(#0b0a14 60%, rgba(11, 10, 20, 0)); }
+  .pb { height: 34px; min-width: 34px; }
+  #stage { top: 40px; }
+  #ptitle span { display: none; }
+}
+
+#pmsg {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; text-align: center;
+  background: #0b0a14;
+}
+#pmsg .box { max-width: 360px; }
+#pmsg .art { width: 220px; margin: 0 auto 10px; }
+#pmsg p { color: #cfc8f4; margin: 10px 0 20px; }
+
+/* Menü */
+.pmenu-ov { position: fixed; inset: 0; z-index: 60; background: rgba(5, 3, 15, 0.55); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn .15s; }
+.pmenu {
+  width: 100%; max-width: 560px; max-height: calc(100% - var(--safe-t) - 16px); overflow-y: auto; overscroll-behavior: contain;
+  background: #1d1938; color: #f2efff; border-radius: 26px 26px 0 0; padding: 10px 16px calc(var(--safe-b) + 18px);
+  animation: sheetUp .24s cubic-bezier(.2, .9, .3, 1);
+  --surface: rgba(255,255,255,.06); --surface2: #2c2654; --surface-solid: #2c2654; --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.16); --text: #f2efff; --muted: #a29bcb;
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .pmenu-ov { justify-content: flex-end; align-items: stretch; }
+  .pmenu { max-width: 400px; max-height: none; height: 100%; border-radius: 22px 0 0 22px; padding-top: calc(var(--safe-t) + 12px); padding-right: calc(var(--safe-r) + 16px); animation: slideIn .24s cubic-bezier(.2, .9, .3, 1); }
+  [dir="rtl"] .pmenu-ov { justify-content: flex-start; }
+}
+@keyframes slideIn { from { transform: translateX(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+.pmenu h4 { margin: 18px 4px 8px; font-size: 14px; color: #a29bcb; font-weight: 700; }
+.pmenu .bigbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pmenu .bigbtns button {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07); font-size: 13px; font-weight: 700; text-align: center;
+}
+.pmenu .bigbtns button svg { width: 24px; height: 24px; color: #ffc94a; }
+.pmenu .states { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.pmenu .states::-webkit-scrollbar { display: none; }
+.pmenu .st { flex: none; width: 128px; border-radius: 14px; overflow: hidden; background: rgba(255, 255, 255, 0.06); text-align: start; }
+.pmenu .st .shot { aspect-ratio: 4 / 3; background: #000; display: grid; place-items: center; }
+.pmenu .st .shot img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.pmenu .st .m { padding: 6px 8px; font-size: 11px; color: #a29bcb; }
+.pmenu .st .m b { display: block; color: #f2efff; font-size: 12px; }
+.pmenu .empty-s { color: #a29bcb; font-size: 14px; padding: 4px; }
+.pmenu .exit { margin-top: 18px; }
+
+/* ---------- 1.3.0 ---------- */
+/* Eigenes Gamepad statt dem von EmulatorJS */
+.ejs_virtualGamepad_parent, .ejs_virtualGamepad_open { display: none !important; }
+#pad { z-index: 20; }
+#notice {
+  position: fixed; z-index: 50; left: 50%; top: calc(var(--safe-t) + 58px); transform: translate(-50%, -8px);
+  padding: 7px 14px; border-radius: 999px; background: rgba(29, 25, 56, 0.92); color: #f2efff; font-size: 13px; font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+}
+#notice.show { opacity: 1; transform: translate(-50%, 0); }
+@media (orientation: landscape) and (max-height: 520px) { #notice { top: 48px; } }
+.pmenu .bigbtns { grid-template-columns: repeat(4, 1fr); }
+.pmenu .bigbtns button { font-size: 12px; padding: 12px 4px; }
+.shot-dlg img { display: block; width: 100%; max-height: 50vh; object-fit: contain; image-rendering: pixelated; border-radius: 12px; background: #000; margin-bottom: 14px; }
+.dialog .btn-row[style*="column"] .btn { flex: none; }

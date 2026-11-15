@@ -1,0 +1,116 @@
+/* Konsolarium – Bildschirm-Gamepad */
+
+.kpad {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  --b-bg: rgba(44, 36, 88, 0.72); --b-fg: #ffc94a; --b-bd: 1.5px solid rgba(255, 201, 74, 0.45); --b-sh: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --b-on-bg: #ffc94a; --b-on-fg: #2b1d00; --d-bg: rgba(44, 36, 88, 0.78); --d-fg: #ffc94a; --k-bg: #ffc94a; --s-bg: rgba(44, 36, 88, 0.55);
+  --p-bg: rgba(44, 36, 88, 0.72); --p-fg: #e9e4ff;
+}
+.kpad[hidden] { display: none !important; }
+.kpad .pc {
+  position: absolute; width: var(--sz); height: var(--sz); transform: translate(-50%, -50%);
+  pointer-events: auto; touch-action: none; opacity: var(--pad-op, 0.85); -webkit-tap-highlight-color: transparent;
+}
+
+/* Tasten */
+.kpad .pc.kb {
+  display: grid; place-items: center; border-radius: 50%; background: var(--b-bg); color: var(--b-fg); border: var(--b-bd);
+  box-shadow: var(--b-sh); font: 800 calc(25px * var(--fs, 1)) / 1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  transition: transform 0.06s, background-color 0.06s, color 0.06s;
+}
+.kpad .pc.kb span { pointer-events: none; }
+.kpad .pc.kb svg { width: calc(var(--sz) * 0.46); height: calc(var(--sz) * 0.46); pointer-events: none; }
+.kpad .pc.kb.on { background: var(--b-on-bg); color: var(--b-on-fg); transform: translate(-50%, -50%) scale(0.92); }
+.kpad .pc.k-pill { height: calc(var(--sz) * 0.46); border-radius: 999px; background: var(--p-bg); color: var(--p-fg); font-size: calc(13px * var(--fs, 1)); font-weight: 750; letter-spacing: 0.02em; }
+.kpad .pc.k-sh { height: calc(var(--sz) * 0.44); border-radius: 14px; font-size: calc(17px * var(--fs, 1)); }
+.kpad .pc.k-sm { font-size: calc(13px * var(--fs, 1)); }
+
+/* Steuerkreuz */
+.kpad .pc.dpad { transition: transform 0.06s; }
+.kpad .dpad .arm { position: absolute; background: var(--d-bg); border: var(--b-bd); box-shadow: var(--b-sh); border-radius: 12px; }
+.kpad .dpad .arm.h { left: 0; right: 0; top: 33%; height: 34%; }
+.kpad .dpad .arm.v { top: 0; bottom: 0; left: 33%; width: 34%; }
+.kpad .dpad .arm.v::after { content: ""; position: absolute; left: -1px; right: -1px; top: 32%; bottom: 32%; background: var(--d-bg); }
+.kpad .dpad .ar { position: absolute; width: 0; height: 0; border: calc(var(--sz) * 0.055) solid transparent; opacity: 0.85; }
+.kpad .dpad .ar.u { left: 50%; top: 9%; transform: translateX(-50%); border-bottom-color: var(--d-fg); border-top-width: 0; }
+.kpad .dpad .ar.d { left: 50%; bottom: 9%; transform: translateX(-50%); border-top-color: var(--d-fg); border-bottom-width: 0; }
+.kpad .dpad .ar.l { top: 50%; left: 9%; transform: translateY(-50%); border-right-color: var(--d-fg); border-left-width: 0; }
+.kpad .dpad .ar.r { top: 50%; right: 9%; transform: translateY(-50%); border-left-color: var(--d-fg); border-right-width: 0; }
+.kpad .dpad.u .ar.u { border-bottom-color: var(--b-on-bg); opacity: 1; }
+.kpad .dpad.d .ar.d { border-top-color: var(--b-on-bg); opacity: 1; }
+.kpad .dpad.l .ar.l { border-right-color: var(--b-on-bg); opacity: 1; }
+.kpad .dpad.r .ar.r { border-left-color: var(--b-on-bg); opacity: 1; }
+.kpad .dpad.u { transform: translate(-50%, -50%) perspective(400px) rotateX(9deg); }
+.kpad .dpad.d { transform: translate(-50%, -50%) perspective(400px) rotateX(-9deg); }
+.kpad .dpad.l { transform: translate(-50%, -50%) perspective(400px) rotateY(-9deg); }
+.kpad .dpad.r { transform: translate(-50%, -50%) perspective(400px) rotateY(9deg); }
+
+/* Analogstick */
+.kpad .pc.stick { border-radius: 50%; background: var(--s-bg); border: var(--b-bd); box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.35); }
+.kpad .stick .knob {
+  position: absolute; left: 50%; top: 50%; width: 46%; height: 46%; border-radius: 50%; transform: translate(-50%, -50%);
+  background: var(--k-bg); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45); pointer-events: none;
+}
+
+/* ---------- Skins ---------- */
+.kpad[data-skin="glas"] {
+  --b-bg: rgba(255, 255, 255, 0.14); --b-fg: #fff; --b-bd: 1.5px solid rgba(255, 255, 255, 0.5); --b-sh: 0 4px 18px rgba(0, 0, 0, 0.25);
+  --b-on-bg: rgba(255, 255, 255, 0.55); --b-on-fg: #111; --d-bg: rgba(255, 255, 255, 0.16); --d-fg: #fff; --k-bg: rgba(255, 255, 255, 0.85);
+  --s-bg: rgba(255, 255, 255, 0.1); --p-bg: rgba(255, 255, 255, 0.14); --p-fg: #fff;
+}
+.kpad[data-skin="glas"] .pc.kb, .kpad[data-skin="glas"] .dpad .arm, .kpad[data-skin="glas"] .pc.stick { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.kpad[data-skin="klassisch"] {
+  --b-bg: #8e2350; --b-fg: #f6e7ee; --b-bd: 0 solid transparent; --b-sh: 0 3px 0 #5a1232, 0 6px 14px rgba(0, 0, 0, 0.35);
+  --b-on-bg: #b8326c; --b-on-fg: #fff; --d-bg: #2c2c33; --d-fg: #8b8b96; --k-bg: #b9b9c2; --s-bg: #2c2c33; --p-bg: #6b6b75; --p-fg: #f2f2f2;
+}
+.kpad[data-skin="klassisch"] .pc.k-sh { --b-bg: #55555f; }
+.kpad[data-skin="farbig"] {
+  --b-bg: #2a2740; --b-fg: #fff; --b-bd: 0 solid transparent; --b-sh: 0 3px 0 rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.3);
+  --b-on-bg: #fff; --b-on-fg: #222; --d-bg: #34314c; --d-fg: #cfcaf0; --k-bg: #e9e6ff; --s-bg: #2a2740; --p-bg: #45415f; --p-fg: #fff;
+}
+.kpad[data-skin="farbig"] [data-c="a"], .kpad[data-skin="farbig"] [data-c="n64a"] { --b-bg: #e5433d; }
+.kpad[data-skin="farbig"] [data-c="b"] { --b-bg: #f2c230; --b-fg: #2b2100; }
+.kpad[data-skin="farbig"] [data-c="x"] { --b-bg: #3b7be0; }
+.kpad[data-skin="farbig"] [data-c="y"], .kpad[data-skin="farbig"] [data-c="n64b"] { --b-bg: #31a85d; }
+.kpad[data-skin="farbig"] [data-c="c"] { --b-bg: #f2c230; --b-fg: #2b2100; }
+.kpad[data-skin="farbig"] [data-c="tri"] { color: #3ad3a0; }
+.kpad[data-skin="farbig"] [data-c="cir"] { color: #ff5d6c; }
+.kpad[data-skin="farbig"] [data-c="crs"] { color: #78aeff; }
+.kpad[data-skin="farbig"] [data-c="sq"] { color: #ff8ad6; }
+.kpad[data-skin="farbig"] [data-c="rw"] { --b-bg: #8c5cff; }
+.kpad[data-skin="neon"] {
+  --b-bg: rgba(6, 4, 18, 0.6); --b-fg: #4ef0ff; --b-bd: 2px solid #4ef0ff; --b-sh: 0 0 12px rgba(78, 240, 255, 0.55), inset 0 0 8px rgba(78, 240, 255, 0.25);
+  --b-on-bg: #ff3fb4; --b-on-fg: #fff; --d-bg: rgba(6, 4, 18, 0.6); --d-fg: #4ef0ff; --k-bg: #ff3fb4; --s-bg: rgba(6, 4, 18, 0.5);
+  --p-bg: rgba(6, 4, 18, 0.6); --p-fg: #4ef0ff;
+}
+.kpad[data-skin="neon"] .pc.kb { text-shadow: 0 0 8px rgba(78, 240, 255, 0.8); }
+.kpad[data-skin="minimal"] {
+  --b-bg: transparent; --b-fg: rgba(255, 255, 255, 0.7); --b-bd: 1.5px solid rgba(255, 255, 255, 0.38); --b-sh: none;
+  --b-on-bg: rgba(255, 255, 255, 0.28); --b-on-fg: #fff; --d-bg: transparent; --d-fg: rgba(255, 255, 255, 0.55); --k-bg: rgba(255, 255, 255, 0.5);
+  --s-bg: transparent; --p-bg: transparent; --p-fg: rgba(255, 255, 255, 0.7);
+}
+.kpad[data-skin="minimal"] .dpad .arm.v::after { background: transparent; }
+.kpad[data-skin="minimal"] .pc.k-pill { border: 1.5px solid rgba(255, 255, 255, 0.38); }
+
+/* ---------- Anordnen ---------- */
+.kpad.editing { pointer-events: auto; background: rgba(5, 3, 15, 0.35); }
+.kpad.editing .pc { opacity: 1; outline: 2px dashed rgba(255, 201, 74, 0.85); outline-offset: 4px; }
+.kpad.editing .pc.sel { outline: 3px solid #ffc94a; }
+.kpad-edit {
+  position: fixed; z-index: 90; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 8px);
+  width: min(400px, calc(100% - 24px)); padding: 10px 12px 12px; border-radius: 18px;
+  background: rgba(29, 25, 56, 0.96); color: #f2efff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  font: 600 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.kpad-edit p { margin: 0 2px 8px; color: #cfc8f4; }
+.kpad-edit .sz { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; }
+.kpad-edit .sz input { flex: 1; accent-color: #ffc94a; }
+.kpad-edit .sz input:disabled { opacity: 0.35; }
+.kpad-edit .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kpad-edit button { height: 38px; border-radius: 19px; background: rgba(255, 255, 255, 0.1); color: #f2efff; font-weight: 750; font-size: 14px; }
+.kpad-edit button.pri { background: #ffc94a; color: #2b1d00; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .kpad-edit { width: min(360px, calc(100% - 300px)); padding: 8px 10px 10px; }
+  .kpad-edit p { display: none; }
+}
