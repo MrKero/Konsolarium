@@ -27,6 +27,9 @@ Mit ❤️ gemacht von Kerem.
 - **Einstellungen pro Spiel:** Skin, Vorspul-Tempo, Autospeichern, Zurückspulen, Bildschirmtasten
 - **Emulatoren verwalten:** einzeln laden oder löschen, Speicherbedarf je Emulator
 - **Anleitung (ab 1.4.1):** alle Funktionen kurz erklärt, als aufklappbare Themen in den Einstellungen
+- **Spielstand-Dateien (ab 1.5.0):** Batteriespeicher als .sav exportieren und .sav/.srm aus Delta, RetroArch oder vom PC importieren
+- **Notizen** pro Spiel für Codes, Passwörter und Fortschritt (auch im Spielmenü)
+- **Akku-Modus:** Zurückspulen und Unschärfe-Effekte aus, Pause nach 5 Minuten ohne Eingabe
 - **Statistik:** Gesamtspielzeit, letzte 14 Tage, meistgespielte Spiele und Konsolen, Speicher
 - **Vorspulen** mit 1,5× bis 8×
 - **Cheats** (GameShark, Action Replay, Game Genie usw.) in den Einstellungen und direkt im Spiel

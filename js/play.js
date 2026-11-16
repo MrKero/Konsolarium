@@ -18,10 +18,14 @@ const PI = {
   cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.5"/></svg>',
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg>',
   move: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9.5 14.5L12 17l2.5-2.5"/></svg>',
+  notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>',
+  bat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="16" height="9" rx="2"/><path d="M21 11v2"/><path d="M6.5 10.5v3M9.5 10.5v3"/></svg>',
   share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>'
 };
 
-const P = { frame: null, rom: null, sys: null, started: false, speed: 1, muted: !Settings.get('gameSound'), cheats: [], exiting: false, lastAuto: 0, stateId: null, menuOpen: false, pad: null, rewind: false, busy: false, padShown: false, frameKey: '' };
+const P = { frame: null, rom: null, sys: null, started: false, speed: 1, muted: !Settings.get('gameSound'), cheats: [], exiting: false, lastAuto: 0, stateId: null, menuOpen: false, pad: null, rewind: false, busy: false, padShown: false, frameKey: '', battery: false, lastInput: Date.now(), idlePaused: false };
+const IDLE_MS = 5 * 60000;
 /* Eigene Skin-Bilder dieser Konsole (Hochformat p, Querformat q) */
 const SK = { img: { p: null, q: null } };
 const AUTO_KEEP = 3;
@@ -174,6 +178,14 @@ function startTicker() {
     if (!P.started || P.exiting) return;
     const e = emu();
     if (document.hidden || P.menuOpen || (P.pad && P.pad.editing) || !e || e.paused) return;
+    /* Akku-Modus: nach 5 Minuten ohne Eingabe pausieren */
+    if (P.battery && Date.now() - P.lastInput > IDLE_MS) {
+      try { e.pause(); } catch (err) { /* egal */ }
+      P.idlePaused = true;
+      autoSave();
+      notice(t('bat.paused'));
+      return;
+    }
     TIME.pending += 1000;
     TIME.sinceAuto += 1000;
     if (TIME.pending >= 30000) flushPlayTime();
@@ -276,6 +288,10 @@ async function renderMenu(ov, close) {
         <label class="switch"><input type="checkbox" id="padsw" ${padWanted() ? 'checked' : ''}><span class="track"></span><span class="knob"></span></label></div>
       <button class="row" data-a="arrange"><span class="ico" style="background:#e07a3a">${PI.move}</span><span class="lbl">${esc(t('pad.arrange'))}</span>${PI.chev}</button>
       <button class="row" data-a="players"><span class="ico" style="background:#e5433d">${PI.pad}</span><span class="lbl">${esc(t('pl2.title'))}</span><span class="val">${esc(playersSummary())}</span>${PI.chev}</button>
+      <button class="row" data-a="notes"><span class="ico" style="background:#e0a400">${PI.notes}</span><span class="lbl">${esc(t('notes.title'))}${P.rom.notes ? `<span class="sub">${esc(P.rom.notes.split('\n')[0].slice(0, 60))}</span>` : ''}</span>${PI.chev}</button>
+      <button class="row" data-a="sav"><span class="ico" style="background:#2fa4e7">${PI.file}</span><span class="lbl">${esc(t('sf.title'))}</span>${PI.chev}</button>
+      <div class="row"><span class="ico" style="background:#2fb784">${PI.bat}</span><span class="lbl">${esc(t('bat.title'))}</span>
+        <label class="switch"><input type="checkbox" id="batsw" ${P.battery ? 'checked' : ''}><span class="track"></span><span class="knob"></span></label></div>
       <button class="row" data-a="ctl"><span class="ico" style="background:#3a8ce0">${PI.gear}</span><span class="lbl">${esc(t('pl.controls'))}</span>${PI.chev}</button>
       <button class="row" data-a="core"><span class="ico" style="background:#5a6b85">${PI.gear}</span><span class="lbl">${esc(t('pl.coreSet'))}</span>${PI.chev}</button>
       <button class="row" data-a="rst"><span class="ico" style="background:#e0a400">${PI.restart}</span><span class="lbl">${esc(t('pl.restart'))}</span></button>
@@ -298,6 +314,8 @@ async function renderMenu(ov, close) {
     else if (a === 'qs') { if (await saveState('quick')) { toast(t('pl.saved')); renderMenu(ov, close); } }
     else if (a === 'ql') { const q = states.find(s => s.kind === 'quick'); if (q && await loadState(q.id)) close(); else if (!q) { Sfx.err(); toast(t('saves.empty'), 'err'); } }
     else if (a === 'players') playersSheet(ov, close);
+    else if (a === 'notes') notesSheet(ov, close);
+    else if (a === 'sav') savSheet(ov, close);
     else if (a === 'ctl') { close(); try { emu().controlMenu.style.display = ''; } catch (e) { /* egal */ } }
     else if (a === 'shot') { close(); await sleep(120); takeScreenshot(); }
     else if (a === 'arrange') {
@@ -325,6 +343,7 @@ async function renderMenu(ov, close) {
     setSpeed(Number(b.dataset.v)); Sfx.toggle(P.speed !== 1);
     $$('#spd button', box).forEach(x => x.setAttribute('aria-pressed', x === b));
   });
+  $('#batsw', box).onchange = e => { setBattery(e.target.checked); Sfx.toggle(e.target.checked); if (e.target.checked) toast(t('bat.next')); };
   $('#snd', box).onchange = e => { setMuted(!e.target.checked); Sfx.toggle(e.target.checked); };
   $('#padsw', box).onchange = async e => { await setPadMode(e.target.checked ? 'on' : 'off'); Sfx.toggle(e.target.checked); updatePad(); };
   $$('[data-ch]', box).forEach(inp => inp.onchange = async () => {
@@ -357,6 +376,84 @@ async function renderMenu(ov, close) {
       }
     });
   });
+}
+
+/* ---------- Notizen zum Spiel (Codes, Passwörter, Fortschritt) ---------- */
+function notesSheet(ov, close) {
+  const box = $('#pm', ov);
+  box.innerHTML = `<h4>${esc(t('notes.title'))}</h4>
+    <textarea class="notes-area" id="nt" placeholder="${esc(t('notes.ph'))}" maxlength="5000">${esc(P.rom.notes || '')}</textarea>
+    <div class="btn-row" style="margin-top:12px"><button class="btn" data-b>${esc(t('c.back'))}</button></div>`;
+  const ta = $('#nt', box);
+  let timer = 0;
+  const save = async () => {
+    clearTimeout(timer);
+    const v = ta.value;
+    if (v === (P.rom.notes || '')) return;
+    P.rom.notes = v;
+    try { const r = await DB.get('roms', P.rom.id); if (v.trim()) r.notes = v; else delete r.notes; await DB.put('roms', r); } catch (e) { /* egal */ }
+  };
+  ta.oninput = () => { clearTimeout(timer); timer = setTimeout(save, 600); };
+  ta.onblur = save;
+  $('[data-b]', box).onclick = async () => { await save(); Sfx.back(); renderMenu(ov, close); };
+}
+
+/* ---------- Spielstand-Datei (.sav) austauschen ---------- */
+function savSheet(ov, close) {
+  const box = $('#pm', ov);
+  box.innerHTML = `<h4>${esc(t('sf.title'))}</h4>
+    <p class="muted small" style="margin:0 4px 12px">${esc(t('sf.intro'))}</p>
+    <div class="group">
+      <button class="row" data-s="exp"><span class="ico" style="background:#2fa4e7">${PI.share}</span><span class="lbl">${esc(t('sf.export'))}</span></button>
+      <button class="row" data-s="imp"><span class="ico" style="background:#2fb784">${PI.file}</span><span class="lbl">${esc(t('sf.import'))}<span class="sub">${esc(t('sf.importSub'))}</span></span></button>
+    </div>
+    <div class="btn-row" style="margin-top:14px"><button class="btn" data-b>${esc(t('c.back'))}</button></div>`;
+  $('[data-b]', box).onclick = () => { Sfx.back(); renderMenu(ov, close); };
+  $('[data-s="exp"]', box).onclick = () => {
+    let data = null;
+    try { data = gm().getSaveFile(); } catch (e) { data = null; }
+    if (!data || !data.length) { Sfx.err(); toast(t('sf.none'), 'err'); return; }
+    shareOrDownload(new Blob([data]), fileSafe(P.rom.name) + '.sav').then(ok => { if (ok) toast(t('sf.exported')); });
+  };
+  $('[data-s="imp"]', box).onclick = () => {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.style.display = 'none';
+    document.body.appendChild(inp);
+    inp.onchange = async () => {
+      const f = inp.files && inp.files[0]; inp.remove();
+      if (!f) return;
+      if (!f.size || f.size > 16 * 1024 * 1024) { Sfx.err(); toast(t('sf.bad'), 'err'); return; }
+      if (!confirm(t('sf.importX') + '\n\n' + t('sf.restart'))) return;
+      try {
+        const g = gm(), bytes = new Uint8Array(await f.arrayBuffer()), path = g.getSaveFilePath();
+        let cp = '';
+        path.split('/').slice(0, -1).forEach(part => { if (!part) return; cp += '/' + part; if (!g.FS.analyzePath(cp).exists) g.FS.mkdir(cp); });
+        if (g.FS.analyzePath(path).exists) g.FS.unlink(path);
+        g.FS.writeFile(path, bytes);
+        g.loadSaveFiles();
+        await new Promise(res => { try { g.FS.syncfs(false, () => res()); } catch (e) { res(); } });
+        g.restart();
+        Sfx.ok(); toast(t('sf.imported'));
+        close();
+      } catch (e) { Sfx.err(); toast(t('c.error', { e: e.message }), 'err'); }
+    };
+    inp.click();
+  };
+}
+
+/* ---------- Akku-Modus ---------- */
+function setBattery(on) {
+  P.battery = !!on;
+  Settings.set('battery', P.battery);
+  document.body.classList.toggle('lowpower', P.battery);
+  P.lastInput = Date.now();
+}
+function markInput() {
+  P.lastInput = Date.now();
+  if (P.idlePaused) {
+    P.idlePaused = false;
+    try { if (!P.menuOpen) emu().play(); } catch (e) { /* egal */ }
+  }
 }
 
 function playersSummary() {
@@ -461,6 +558,8 @@ function ejsMenuOpen() {
   try { return !!(e && ((e.settingsMenu && e.settingsMenu.style.display !== 'none') || (e.isPopupOpen && e.isPopupOpen()))); } catch (err) { return false; }
 }
 function updatePad() {
+  /* Controller-Tasten zählen als Eingabe (Akku-Modus) */
+  try { for (const gp of (navigator.getGamepads ? navigator.getGamepads() : [])) if (gp && gp.buttons.some(b => b.pressed)) { markInput(); break; } } catch (e) { /* egal */ }
   if (!P.pad || P.pad.editing) return;
   const want = padWanted();
   P.pad.setVisible(want && !ejsMenuOpen());
@@ -469,7 +568,7 @@ function updatePad() {
 function setupPad() {
   P.pad = Pad.create($('#pad'), {
     sys: P.sys.id, rewind: P.rewind, look: currentLook,
-    send: (i, v) => { const g = gm(); if (g && P.started) { try { g.simulateInput(0, i, v); } catch (e) { /* egal */ } } }
+    send: (i, v) => { markInput(); const g = gm(); if (g && P.started) { try { g.simulateInput(0, i, v); } catch (e) { /* egal */ } } }
   });
   P.padShown = padWanted();
   applyFrame();
@@ -677,6 +776,12 @@ async function onGameStart() {
   P.started = true;
   guardSaveMount();
   setupPlayers();
+  /* Pfad der Spielstand-Datei merken – damit sie auch außerhalb des Spiels ausgetauscht werden kann */
+  try {
+    const sp = gm().getSaveFilePath();
+    if (sp && P.rom.savePath !== sp) { P.rom.savePath = sp; DB.get('roms', P.rom.id).then(r => { if (r) { r.savePath = sp; return DB.put('roms', r); } }).catch(() => {}); }
+  } catch (e) { /* egal */ }
+  if (P.battery) notice(t('bat.on'));
   hideMsg();
   ['#b-qs', '#b-ff'].forEach(s => $(s).disabled = false);
   await sleep(300);
@@ -697,7 +802,9 @@ async function onGameStart() {
   P.sys = sysById(rom.system);
   const sys = P.sys;
   setupBar();
-  P.rewind = pref('rewind') !== false && REWIND_SYS.includes(sys.id);
+  setBattery(Settings.get('battery') === true);
+  P.rewind = pref('rewind') !== false && REWIND_SYS.includes(sys.id) && !P.battery;
+  ['touchstart', 'keydown', 'pointerdown'].forEach(ev => window.addEventListener(ev, markInput, { passive: true, capture: true }));
   setupPad();
   setupGestures();
   showMsg(t('pl.loading'));

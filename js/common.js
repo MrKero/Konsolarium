@@ -1,6 +1,6 @@
 /* Konsolarium – gemeinsame Grundfunktionen (App + Spieler) */
 
-const APP = { name: 'Konsolarium', version: '1.4.1', date: '2026-11-16', ejs: '4.2.3', author: 'Kerem' };
+const APP = { name: 'Konsolarium', version: '1.5.0', date: '2026-11-16', ejs: '4.2.3', author: 'Kerem' };
 
 /* ---------- Einstellungen ---------- */
 const Settings = (() => {
@@ -10,7 +10,7 @@ const Settings = (() => {
     gameSound: true, clicks: true, autoUpdate: true, autosave: true,
     ffSpeed: 2, sortSys: 'old', sortLib: 'recent', cores: {}, offlineDone: false,
     autosaveMin: 5, rewind: true, padSkin: 'konsolarium', padOpacity: 0.85, padScale: 1, padMode: 'auto', padLayouts: {},
-    padSkinBySys: {}, padImgButtons: false, gestures: true
+    padSkinBySys: {}, padImgButtons: false, gestures: true, battery: false
   };
   let data;
   try { data = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); }
@@ -336,6 +336,53 @@ async function packLoad(pack, onBytes) {
 async function packDelete(pack) {
   for (const [cn, url] of pack.files) { const c = await caches.open(cn); await c.delete(absUrl(url)); }
   Settings.set('offlineAll', false);
+}
+
+/* Spielstand-Dateien (Batteriespeicher) im Emulator-Speicher lesen und schreiben.
+   EmulatorJS legt sie in der Datenbank '/data/saves' (Store FILE_DATA) unter ihrem Pfad ab. */
+const SaveFiles = {
+  open() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('/data/saves');
+      r.onupgradeneeded = () => { try { r.transaction.abort(); } catch (e) { /* egal */ } };
+      r.onsuccess = () => { if (r.result.objectStoreNames.contains('FILE_DATA')) res(r.result); else { r.result.close(); rej(new Error('nodb')); } };
+      r.onerror = () => rej(r.error || new Error('nodb'));
+    });
+  },
+  async get(path) {
+    const db = await this.open();
+    try {
+      return await new Promise((res, rej) => { const q = db.transaction('FILE_DATA').objectStore('FILE_DATA').get(path); q.onsuccess = () => res(q.result && q.result.contents ? new Uint8Array(q.result.contents) : null); q.onerror = () => rej(q.error); });
+    } finally { db.close(); }
+  },
+  async put(path, bytes) {
+    const db = await this.open();
+    try {
+      await new Promise((res, rej) => {
+        const tx = db.transaction('FILE_DATA', 'readwrite'), st = tx.objectStore('FILE_DATA');
+        /* Ordner anlegen, falls das Spiel noch nie gespeichert hat (Einhängepunkt selbst nicht) */
+        const parts = path.split('/').filter(Boolean);
+        for (let i = 3; i < parts.length; i++) {
+          const dir = '/' + parts.slice(0, i).join('/');
+          const q = st.get(dir);
+          q.onsuccess = () => { if (!q.result) st.put({ timestamp: new Date(), mode: 16877 }, dir); };
+        }
+        st.put({ timestamp: new Date(), mode: 33206, contents: new Uint8Array(bytes) }, path);
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    } finally { db.close(); }
+  }
+};
+function fileSafe(name) { return String(name || 'spiel').replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'spiel'; }
+/* Datei teilen (iPhone: „In Dateien sichern“, AirDrop …) oder herunterladen */
+function shareOrDownload(blob, name) {
+  const file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
+  const touch = matchMedia('(pointer: coarse)').matches;
+  let can = false;
+  try { can = touch && navigator.canShare && navigator.canShare({ files: [file] }); } catch (e) { can = false; }
+  const dl = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+  if (can) return navigator.share({ files: [file] }).then(() => true).catch(err => { if (err && err.name === 'AbortError') return false; dl(); return true; });
+  dl(); return Promise.resolve(true);
 }
 
 /* Eigene Skin-Bilder je Konsole und Ausrichtung – eigene kleine Datenbank */

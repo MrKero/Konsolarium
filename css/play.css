@@ -91,3 +91,8 @@ body.player #toast { bottom: calc(var(--safe-b) + 22px); }
 .pmenu .bigbtns button { font-size: 12px; padding: 12px 4px; }
 .shot-dlg img { display: block; width: 100%; max-height: 50vh; object-fit: contain; image-rendering: pixelated; border-radius: 12px; background: #000; margin-bottom: 14px; }
 .dialog .btn-row[style*="column"] .btn { flex: none; }
+
+/* Notizen im Spielmenü */
+.notes-area { width: 100%; min-height: 180px; resize: vertical; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 16px/1.45 inherit; font-family: inherit; }
+/* Akku-Modus: keine Unschärfe-Effekte (sparen Grafikleistung) */
+body.lowpower *, body.lowpower *::before, body.lowpower *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }

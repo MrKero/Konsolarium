@@ -43,6 +43,9 @@ const ICON = {
   chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6" rx="1"/><rect x="10.5" y="6" width="3" height="11" rx="1"/><rect x="15.5" y="9" width="3" height="8" rx="1"/></svg>',
   hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7.5a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.2L3.6 16a1.6 1.6 0 0 1 2.4-2.1L8 15.5"/></svg>',
   download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9.5 14.5L12 17l2.5-2.5"/></svg>',
+  notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></svg>',
+  bat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="16" height="9" rx="2"/><path d="M21 11v2"/><path d="M6.5 10.5v3M9.5 10.5v3"/></svg>',
   help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.8"/><path d="M12 17.2h.01"/></svg>',
   sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>'
 };
@@ -709,6 +712,15 @@ async function viewRom(view, id) {
           <button class="row danger" id="del"><span class="ico" style="background:var(--red)">${ICON.trash}</span><span class="lbl">${esc(t('rom.delete'))}</span></button>
         </div>
         ${s.lab ? `<div class="note" style="margin-top:16px">${esc(t('note.labUi'))}</div>` : ''}
+        <h3 class="h3">${esc(t('notes.title'))}</h3>
+        <textarea class="notes-area" id="rnotes" placeholder="${esc(t('notes.ph'))}" maxlength="5000">${esc(r.notes || '')}</textarea>
+        <div class="muted small" id="rnotes-st" style="margin:4px 6px 0;min-height:1.2em"></div>
+        ${s.lab ? '' : `<h3 class="h3">${esc(t('sf.title'))}</h3>
+        <div class="group">
+          <button class="row" id="sfexp" ${r.savePath ? '' : 'disabled'}><span class="ico" style="background:#2fa4e7">${ICON.share}</span><span class="lbl">${esc(t('sf.export'))}<span class="sub" id="sfsub">${esc(r.savePath ? '…' : t('sf.needPlay'))}</span></span></button>
+          <button class="row" id="sfimp" ${r.savePath ? '' : 'disabled'}><span class="ico" style="background:#2fb784">${ICON.file}</span><span class="lbl">${esc(t('sf.import'))}<span class="sub">${esc(t('sf.importSub'))}</span></span></button>
+        </div>
+        <p class="muted small" style="margin:8px 6px 0">${esc(t('sf.intro'))}</p>`}
         ${states.length && !s.lab ? `<h3 class="h3">${esc(t('rom.states'))}</h3><div class="save-grid" id="romstates">${states.map(st => saveCard(st, r)).join('')}</div>` : ''}
       </div>
     </div>`;
@@ -733,6 +745,40 @@ async function viewRom(view, id) {
   $('#fav').onclick = async () => { r.fav = !r.fav; await DB.put('roms', r); Sfx.toggle(r.fav); render(); };
   if ($('#cheats')) $('#cheats').onclick = () => { Sfx.tap(); go('#/cheats/' + id); };
   if ($('#rprefs')) $('#rprefs').onclick = () => { Sfx.tap(); go('#/romprefs/' + id); };
+  /* Notizen speichern sich beim Tippen */
+  let ntTimer = 0;
+  const saveNotes = async () => {
+    clearTimeout(ntTimer);
+    const v = $('#rnotes') ? $('#rnotes').value : null;
+    if (v === null || v === (r.notes || '')) return;
+    const cur = await DB.get('roms', id); if (!cur) return;
+    if (v.trim()) cur.notes = v; else delete cur.notes;
+    await DB.put('roms', cur); r.notes = cur.notes;
+    const st = $('#rnotes-st'); if (st) st.textContent = t('notes.saved');
+  };
+  $('#rnotes').oninput = () => { clearTimeout(ntTimer); const st = $('#rnotes-st'); if (st) st.textContent = ''; ntTimer = setTimeout(saveNotes, 700); };
+  $('#rnotes').onblur = saveNotes;
+  /* Spielstand-Datei (.sav) austauschen */
+  let sfData = null;
+  if (r.savePath && $('#sfexp')) {
+    SaveFiles.get(r.savePath).then(d => { sfData = d; const el = $('#sfsub'); if (el) el.textContent = d && d.length ? fileSafe(r.name) + '.sav – ' + fmtBytes(d.length) : t('sf.none'); })
+      .catch(() => { const el = $('#sfsub'); if (el) el.textContent = t('sf.none'); });
+    $('#sfexp').onclick = () => {
+      if (!sfData || !sfData.length) { Sfx.err(); toast(t('sf.none'), 'err'); return; }
+      Sfx.tap();
+      shareOrDownload(new Blob([sfData]), fileSafe(r.name) + '.sav').then(ok => { if (ok) toast(t('sf.exported')); });
+    };
+    $('#sfimp').onclick = () => {
+      Sfx.tap();
+      pickFile('any', async files => {
+        const f = files[0];
+        if (!f.size || f.size > 16 * 1024 * 1024) { Sfx.err(); toast(t('sf.bad'), 'err'); return; }
+        if (!(await confirmDlg(t('sf.import'), t('sf.importX'), t('sf.import'), true))) return;
+        try { await SaveFiles.put(r.savePath, new Uint8Array(await f.arrayBuffer())); Sfx.ok(); toast(t('sf.imported')); render(); }
+        catch (e) { Sfx.err(); toast(t('c.error', { e: e.message }), 'err'); }
+      });
+    };
+  }
   $('#ren').onclick = async () => { const n = await promptDlg(t('rom.newName'), r.name); if (n) { r.name = n; await DB.put('roms', r); Sfx.ok(); render(); } };
   $('#chs').onclick = async () => {
     const ext = r.fileName.split('.').pop().toLowerCase();
@@ -994,6 +1040,7 @@ async function viewSettings(view) {
       ${switchRow('s-as', ICON.saves, '#2fb784', t('set.autosave'), Settings.get('autosave'))}
       ${switchRow('s-rw', ICON.rewind, '#8c5cff', t('set.rewind'), Settings.get('rewind') !== false, t('set.rewindSub'))}
       ${switchRow('s-ge', ICON.hand, '#e07a3a', t('set.gestures'), Settings.get('gestures') !== false, t('set.gesturesSub'))}
+      ${switchRow('s-bat', ICON.bat, '#2fb784', t('bat.title'), Settings.get('battery') === true, t('bat.sub'))}
       ${linkRow('#/settings/controller', ICON.consoles, '#3a8ce0', t('set.controller'), esc(t('skin.' + (Settings.get('padSkin') || 'konsolarium'))))}
       ${linkRow('#/settings/cheats', ICON.wand, '#8c5cff', t('set.cheats'), '')}
     </div>
@@ -1020,7 +1067,7 @@ async function viewSettings(view) {
 
   $$('[data-go]', view).forEach(b => b.onclick = () => { Sfx.tap(); go(b.dataset.go); });
   const sw = (id, key) => { const el = $('#' + id); el.onchange = () => { Settings.set(key, el.checked); Sfx.toggle(el.checked); }; };
-  sw('s-gs', 'gameSound'); sw('s-cl', 'clicks'); sw('s-as', 'autosave'); sw('s-au', 'autoUpdate'); sw('s-rw', 'rewind'); sw('s-ge', 'gestures');
+  sw('s-gs', 'gameSound'); sw('s-cl', 'clicks'); sw('s-as', 'autosave'); sw('s-au', 'autoUpdate'); sw('s-rw', 'rewind'); sw('s-ge', 'gestures'); sw('s-bat', 'battery');
   $$('#aiseg button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('autosaveMin', Number(b.dataset.v)); $$('#aiseg button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
   $$('#themeseg button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('theme', b.dataset.v); render(); });
   $$('#ffseg button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('ffSpeed', Number(b.dataset.v)); $$('#ffseg button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
@@ -1221,7 +1268,7 @@ const HELP = [
   ['start', 'library', '#3a8ce0'], ['bios', 'chip', '#5a6b85'], ['play', 'consoles', '#8c5cff'], ['saves', 'saves', '#2fb784'],
   ['speed', 'ff', '#e0a400'], ['gestures', 'hand', '#e07a3a'], ['pad', 'sliders', '#3a8ce0'], ['skins', 'palette', '#ff5ca8'],
   ['players', 'consoles', '#e5433d'], ['gameprefs', 'sliders', '#2fa4e7'], ['covers', 'image', '#2fb784'], ['cheats', 'chip', '#e0a400'],
-  ['stats', 'chart', '#ff5ca8'], ['backup', 'backup', '#2fb784'], ['emus', 'chip', '#2fa4e7'], ['home', 'refresh', '#5a6b85'], ['labs', 'info', '#8c5cff']
+  ['files', 'file', '#2fa4e7'], ['notes', 'notes', '#e0a400'], ['battery', 'bat', '#2fb784'], ['stats', 'chart', '#ff5ca8'], ['backup', 'backup', '#2fb784'], ['emus', 'chip', '#2fa4e7'], ['home', 'refresh', '#5a6b85'], ['labs', 'info', '#8c5cff']
 ];
 function viewHelp(view) {
   view.innerHTML = `${topbar('#/settings')}<h1 class="title-xl">${esc(t('help.title'))}</h1>
@@ -1488,6 +1535,7 @@ function viewAbout(view) {
     </div>
     <h3 class="h3">${esc(t('about.versions'))}</h3>
     <div class="group">
+      <div class="src-item"><b>1.5.0 – ${esc(fmtDate(new Date('2026-11-16T13:00:00').getTime()))}</b><span>${esc(t('ver.8'))}</span></div>
       <div class="src-item"><b>1.4.1 – ${esc(fmtDate(new Date('2026-11-16T12:00:00').getTime()))}</b><span>${esc(t('ver.7'))}</span></div>
       <div class="src-item"><b>1.4.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.6'))}</span></div>
       <div class="src-item"><b>1.3.1 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.5'))}</span></div>

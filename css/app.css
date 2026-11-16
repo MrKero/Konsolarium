@@ -710,3 +710,8 @@ button.row:active, a.row:active { background: var(--surface2); }
 @media (prefers-reduced-motion: reduce) { .help-item .help-chev { transition: none; } }
 .help-item summary .ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: none; color: #fff; }
 .help-item summary .ico svg { width: 18px; height: 18px; }
+
+/* Notizen auf der Spielseite */
+.notes-area { display: block; width: 100%; min-height: 110px; resize: vertical; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); color: var(--text); font: inherit; font-size: 16px; line-height: 1.45; }
+.notes-area:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.row:disabled { opacity: 0.55; }
