@@ -21,9 +21,9 @@ const PI = {
   share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>'
 };
 
-const P = { frame: null, rom: null, sys: null, started: false, speed: 1, muted: !Settings.get('gameSound'), cheats: [], exiting: false, lastAuto: 0, stateId: null, menuOpen: false, pad: null, rewind: false, busy: false };
-/* Zurückspulen kostet Rechenzeit – nur für Konsolen mit kleinen Speicherständen */
-const REWIND_SYS = ['nes', 'gb', 'gbc', 'gba', 'snes', 'segaMS', 'segaGG', 'segaMD', 'sega32x', 'pce', 'atari2600', 'atari7800', 'lynx', 'ngp', 'ws', 'vb', 'coleco', 'a5200'];
+const P = { frame: null, rom: null, sys: null, started: false, speed: 1, muted: !Settings.get('gameSound'), cheats: [], exiting: false, lastAuto: 0, stateId: null, menuOpen: false, pad: null, rewind: false, busy: false, padShown: false, frameKey: '' };
+/* Eigene Skin-Bilder dieser Konsole (Hochformat p, Querformat q) */
+const SK = { img: { p: null, q: null } };
 const AUTO_KEEP = 3;
 const TIME = { pending: 0, sinceAuto: 0 };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -51,6 +51,20 @@ function stateLabel(s) {
   return s.name || (s.kind === 'auto' ? t('saves.auto') : s.kind === 'quick' ? t('saves.quick') : t('saves.slot'));
 }
 
+/* ---------- Einstellungen pro Spiel ---------- */
+const PREF_KEY = { ffSpeed: 'ff', rewind: 'rewind', autosaveMin: 'autoMin', padMode: 'padMode' };
+function pref(k) {
+  const p = (P.rom && P.rom.prefs) || {};
+  const v = p[PREF_KEY[k]];
+  return v === undefined || v === null || v === 'default' ? Settings.get(k) : v;
+}
+async function setPadMode(v) {
+  if (P.rom.prefs && P.rom.prefs.padMode && P.rom.prefs.padMode !== 'default') {
+    P.rom.prefs.padMode = v;
+    try { const r = await DB.get('roms', P.rom.id); r.prefs = Object.assign(r.prefs || {}, { padMode: v }); await DB.put('roms', r); } catch (e) { /* egal */ }
+  } else Settings.set('padMode', v);
+}
+
 function sanitizeName(s) { return s.replace(/[#<$+%>!`&*'|{}/\\?"=@:^\r\n]/g, '').trim() || 'game'; }
 function cheatCode(c) { return c.code.split(/\n+/).map(x => x.trim()).filter(Boolean).join('+'); }
 
@@ -65,12 +79,12 @@ function setupBar() {
   $('#b-exit').onclick = () => { Sfx.back(); exitGame(); };
   $('#b-qs').onclick = async () => { Sfx.tap(); if (await saveState('quick')) toast(t('pl.saved')); };
   $('#b-menu').onclick = () => { Sfx.tap(); openMenu(); };
-  $('#b-ff').onclick = () => { setSpeed(P.speed === 1 ? Settings.get('ffSpeed') : 1); Sfx.toggle(P.speed !== 1); };
+  $('#b-ff').onclick = () => { setSpeed(P.speed === 1 ? pref('ffSpeed') : 1); Sfx.toggle(P.speed !== 1); };
   ['#b-qs', '#b-ff'].forEach(s => $(s).disabled = true);
 }
 function updateFfButton() {
   const b = $('#b-ff');
-  b.innerHTML = PI.ff + `<span>${P.speed === 1 ? fmtNum(Settings.get('ffSpeed')) : fmtNum(P.speed)}×</span>`;
+  b.innerHTML = PI.ff + `<span>${P.speed === 1 ? fmtNum(pref('ffSpeed')) : fmtNum(P.speed)}×</span>`;
   b.setAttribute('aria-pressed', P.speed !== 1);
   b.setAttribute('aria-label', t('pl.ff'));
 }
@@ -152,6 +166,7 @@ async function flushPlayTime() {
   try {
     const r = await DB.get('roms', P.rom.id);
     if (r) { r.playTime = (r.playTime || 0) + add; await DB.put('roms', r); }
+    logPlayDay(add);
   } catch (e) { TIME.pending += add; }
 }
 function startTicker() {
@@ -162,7 +177,7 @@ function startTicker() {
     TIME.pending += 1000;
     TIME.sinceAuto += 1000;
     if (TIME.pending >= 30000) flushPlayTime();
-    const min = Number(Settings.get('autosaveMin')) || 0;
+    const min = Number(pref('autosaveMin')) || 0;
     if (min > 0 && TIME.sinceAuto >= min * 60000 && !P.busy) {
       TIME.sinceAuto = 0;
       P.busy = true;
@@ -260,6 +275,7 @@ async function renderMenu(ov, close) {
       <div class="row"><span class="ico" style="background:#2fb784">${PI.pad}</span><span class="lbl">${esc(t('pad.onscreen'))}</span>
         <label class="switch"><input type="checkbox" id="padsw" ${padWanted() ? 'checked' : ''}><span class="track"></span><span class="knob"></span></label></div>
       <button class="row" data-a="arrange"><span class="ico" style="background:#e07a3a">${PI.move}</span><span class="lbl">${esc(t('pad.arrange'))}</span>${PI.chev}</button>
+      <button class="row" data-a="players"><span class="ico" style="background:#e5433d">${PI.pad}</span><span class="lbl">${esc(t('pl2.title'))}</span><span class="val">${esc(playersSummary())}</span>${PI.chev}</button>
       <button class="row" data-a="ctl"><span class="ico" style="background:#3a8ce0">${PI.gear}</span><span class="lbl">${esc(t('pl.controls'))}</span>${PI.chev}</button>
       <button class="row" data-a="core"><span class="ico" style="background:#5a6b85">${PI.gear}</span><span class="lbl">${esc(t('pl.coreSet'))}</span>${PI.chev}</button>
       <button class="row" data-a="rst"><span class="ico" style="background:#e0a400">${PI.restart}</span><span class="lbl">${esc(t('pl.restart'))}</span></button>
@@ -281,13 +297,14 @@ async function renderMenu(ov, close) {
     if (a === 'new') { if (await saveState('slot')) { toast(t('pl.saved')); renderMenu(ov, close); } }
     else if (a === 'qs') { if (await saveState('quick')) { toast(t('pl.saved')); renderMenu(ov, close); } }
     else if (a === 'ql') { const q = states.find(s => s.kind === 'quick'); if (q && await loadState(q.id)) close(); else if (!q) { Sfx.err(); toast(t('saves.empty'), 'err'); } }
+    else if (a === 'players') playersSheet(ov, close);
     else if (a === 'ctl') { close(); try { emu().controlMenu.style.display = ''; } catch (e) { /* egal */ } }
     else if (a === 'shot') { close(); await sleep(120); takeScreenshot(); }
     else if (a === 'arrange') {
       const wasPaused = close.wasPaused;
       close(true);
       try { if (P.started) emu().pause(); } catch (e) { /* egal */ }
-      if (!padWanted()) Settings.set('padMode', 'on');
+      if (!padWanted()) await setPadMode('on');
       P.pad.setVisible(true);
       await P.pad.edit();
       updatePad();
@@ -309,7 +326,7 @@ async function renderMenu(ov, close) {
     $$('#spd button', box).forEach(x => x.setAttribute('aria-pressed', x === b));
   });
   $('#snd', box).onchange = e => { setMuted(!e.target.checked); Sfx.toggle(e.target.checked); };
-  $('#padsw', box).onchange = e => { Settings.set('padMode', e.target.checked ? 'on' : 'off'); Sfx.toggle(e.target.checked); updatePad(); };
+  $('#padsw', box).onchange = async e => { await setPadMode(e.target.checked ? 'on' : 'off'); Sfx.toggle(e.target.checked); updatePad(); };
   $$('[data-ch]', box).forEach(inp => inp.onchange = async () => {
     const c = P.cheats[Number(inp.dataset.ch)]; c.enabled = inp.checked; await DB.put('cheats', c); applyCheats(); Sfx.toggle(c.enabled);
   });
@@ -340,6 +357,12 @@ async function renderMenu(ov, close) {
       }
     });
   });
+}
+
+function playersSummary() {
+  const e = emu();
+  const n = ((e && e.gamepadSelection) || []).filter(Boolean).length;
+  return n ? t('pl2.count', { n }) : '';
 }
 
 /* Name eingeben (leer = Standardbezeichnung) */
@@ -422,25 +445,191 @@ function isTouchDevice() { return /iPhone|iPad|iPod|Android/i.test(navigator.use
 
 /* ---------- Bildschirmtasten ---------- */
 function padWanted() {
-  const m = Settings.get('padMode') || 'auto';
+  const m = pref('padMode') || 'auto';
   if (m === 'off') return false;
   if (m === 'on') return true;
-  return Pad.hasTouch() && !Pad.gamepadConnected();
+  return Pad.hasTouch() && !player1HasController();
+}
+/* Hat Spieler 1 einen Controller? (sonst Bildschirmtasten, auch wenn Spieler 2 einen hat) */
+function player1HasController() {
+  const e = emu();
+  if (e && Array.isArray(e.gamepadSelection) && e.gamepadSelection.length) return !!e.gamepadSelection[0];
+  return Pad.gamepadConnected();
 }
 function ejsMenuOpen() {
   const e = emu();
   try { return !!(e && ((e.settingsMenu && e.settingsMenu.style.display !== 'none') || (e.isPopupOpen && e.isPopupOpen()))); } catch (err) { return false; }
 }
-function updatePad() { if (P.pad && !P.pad.editing) P.pad.setVisible(padWanted() && !ejsMenuOpen()); }
+function updatePad() {
+  if (!P.pad || P.pad.editing) return;
+  const want = padWanted();
+  P.pad.setVisible(want && !ejsMenuOpen());
+  if (want !== P.padShown) { P.padShown = want; applyFrame(); }
+}
 function setupPad() {
   P.pad = Pad.create($('#pad'), {
-    sys: P.sys.id, rewind: P.rewind,
+    sys: P.sys.id, rewind: P.rewind, look: currentLook,
     send: (i, v) => { const g = gm(); if (g && P.started) { try { g.simulateInput(0, i, v); } catch (e) { /* egal */ } } }
   });
+  P.padShown = padWanted();
+  applyFrame();
   updatePad();
   window.addEventListener('gamepadconnected', updatePad);
   window.addEventListener('gamepaddisconnected', updatePad);
   setInterval(updatePad, 500);
+  new ResizeObserver(() => applyFrame()).observe($('#stage'));
+  loadSkinImages().then(() => { applyFrame(); P.pad.layout(); });
+}
+
+/* ---------- Skins: Tasten, Gehäuse oder eigenes Bild ---------- */
+function chosenSkin() {
+  const p = (P.rom && P.rom.prefs) || {};
+  if (p.skin && p.skin !== 'auto') return p.skin;
+  const bySys = (Settings.get('padSkinBySys') || {})[P.sys.id];
+  return bySys || Settings.get('padSkin') || 'konsolarium';
+}
+function stageOrient() { const r = $('#stage').getBoundingClientRect(); return r.width > r.height ? 'q' : 'p'; }
+function currentLook() {
+  let skin = chosenSkin();
+  if (skin === 'bild') {
+    const im = SK.img[stageOrient()];
+    const g = Settings.get('padSkin');
+    if (im) return { kind: 'img', skin: Pad.SKINS.includes(g) ? g : 'glas', ghost: !!im.hide, img: im };
+    skin = g === 'bild' ? 'konsolarium' : g;
+  }
+  if (!Pad.ALL_SKINS.includes(skin)) skin = 'konsolarium';
+  return { kind: Pad.isBody(skin) ? 'body' : 'none', skin };
+}
+async function loadSkinImages() {
+  for (const o of ['p', 'q']) {
+    try {
+      const rec = await SkinStore.get(P.sys.id, o);
+      if (rec && rec.blob && rec.w && rec.h) SK.img[o] = { url: URL.createObjectURL(rec.blob), w: rec.w, h: rec.h, hide: !!rec.hide };
+    } catch (e) { /* ohne Bild weiter */ }
+  }
+}
+function applyFrame() {
+  if (!P.sys) return;
+  const r = $('#stage').getBoundingClientRect();
+  const look = currentLook();
+  const kind = P.padShown ? look.kind : 'none';
+  const rects = Pad.frameRects(r.width, r.height, P.sys.id, kind, look.img);
+  const q = rects.game, key = [q.l, q.t, q.w, q.h].join(',');
+  if (P.frameKey !== key) {
+    P.frameKey = key;
+    Object.assign($('#gamebox').style, { left: q.l + 'px', top: q.t + 'px', width: q.w + 'px', height: q.h + 'px' });
+  }
+  Pad.paintBody($('#kbody'), kind, look.skin, rects, look.img && look.img.url);
+}
+
+/* ---------- Gesten auf dem Spielbild (zwei Finger) ----------
+   Wischen nach rechts: Vorspulen an/aus · nach links und halten: Zurückspulen · zweimal tippen: Schnellspeichern.
+   Bewusst nur mit zwei Fingern und klaren Schwellen, damit nichts aus Versehen auslöst. */
+function setupGestures() {
+  const stage = $('#stage');
+  const G = { pts: new Map(), t0: 0, c0: null, max: 0, mode: null, moved: false, lastTap: 0, rw: false };
+  const on = () => Settings.get('gestures') !== false && P.started && !P.menuOpen && !(P.pad && P.pad.editing);
+  const centroid = () => { let x = 0, y = 0; G.pts.forEach(p => { x += p.x; y += p.y; }); return { x: x / G.pts.size, y: y / G.pts.size }; };
+  const stopRw = () => { if (G.rw) { G.rw = false; try { gm().simulateInput(0, 28, 0); } catch (e) { /* egal */ } } };
+  stage.addEventListener('touchstart', ev => {
+    for (const tch of ev.changedTouches) {
+      const tgt = tch.target;
+      if (tgt && tgt.closest && tgt.closest('.pc')) continue; /* Bildschirmtasten nicht mitzählen */
+      G.pts.set(tch.identifier, { x0: tch.clientX, y0: tch.clientY, x: tch.clientX, y: tch.clientY });
+    }
+    if (G.pts.size === 2 && G.max < 2) { G.t0 = Date.now(); G.c0 = centroid(); G.mode = null; G.moved = false; }
+    G.max = Math.max(G.max, G.pts.size);
+  }, { passive: true, capture: true });
+  stage.addEventListener('touchmove', ev => {
+    for (const tch of ev.changedTouches) { const p = G.pts.get(tch.identifier); if (p) { p.x = tch.clientX; p.y = tch.clientY; } }
+    if (G.pts.size !== 2 || !G.c0) return;
+    const c = centroid(), dx = c.x - G.c0.x, dy = c.y - G.c0.y;
+    if (Math.hypot(dx, dy) > 14) G.moved = true;
+    if (G.mode || !on() || Date.now() - G.t0 > 900) return;
+    const both = [...G.pts.values()].every(p => Math.sign(p.x - p.x0) === Math.sign(dx) && Math.abs(p.x - p.x0) > 45);
+    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 2.2 || !both) return;
+    if (dx > 0) {
+      G.mode = 'ff';
+      setSpeed(P.speed === 1 ? pref('ffSpeed') : 1);
+      Sfx.toggle(P.speed !== 1);
+      notice(P.speed !== 1 ? t('ges.ffOn', { n: fmtNum(P.speed) }) : t('ges.ffOff'));
+    } else if (P.rewind) {
+      G.mode = 'rw'; G.rw = true;
+      try { gm().simulateInput(0, 28, 1); } catch (e) { /* egal */ }
+      notice(t('ges.rewind'));
+    } else { G.mode = 'none'; notice(t('ges.noRewind')); }
+  }, { passive: true, capture: true });
+  const end = ev => {
+    for (const tch of ev.changedTouches) G.pts.delete(tch.identifier);
+    if (G.mode === 'rw' && G.pts.size < 2) stopRw();
+    if (G.pts.size) return;
+    const tap = G.max === 2 && !G.moved && !G.mode && G.c0 && Date.now() - G.t0 < 350;
+    G.max = 0; G.c0 = null; G.mode = null;
+    if (!tap || !on()) return;
+    const now = Date.now();
+    if (now - G.lastTap < 450) {
+      G.lastTap = 0;
+      saveState('quick').then(ok => { if (ok) notice(t('ges.saved')); });
+    } else G.lastTap = now;
+  };
+  stage.addEventListener('touchend', end, { passive: true, capture: true });
+  stage.addEventListener('touchcancel', ev => { end(ev); stopRw(); }, { passive: true, capture: true });
+}
+
+/* ---------- Zwei Spieler mit Controllern ---------- */
+/* EmulatorJS belegt nur Spieler 1 vor. Spieler 2–4 bekommen dieselben Controller-Tasten (ohne Tastatur). */
+function setupPlayers() {
+  const e = emu();
+  if (!e || !e.controls) return;
+  const base = (e.defaultControllers && e.defaultControllers[0]) || e.controls[0] || {};
+  const pads = {};
+  Object.keys(base).forEach(k => { if (base[k] && base[k].value2 !== undefined) pads[k] = { value2: base[k].value2 }; });
+  let changed = false;
+  for (let pl = 1; pl < 4; pl++) {
+    if (e.defaultControllers && (!e.defaultControllers[pl] || !Object.keys(e.defaultControllers[pl]).length)) e.defaultControllers[pl] = JSON.parse(JSON.stringify(pads));
+    const cur = e.controls[pl] || {};
+    const hasPad = Object.values(cur).some(v => v && v.value2 !== undefined && v.value2 !== '');
+    if (!hasPad) { e.controls[pl] = Object.assign(cur, JSON.parse(JSON.stringify(pads))); changed = true; }
+  }
+  if (changed) { try { e.checkGamepadInputs && e.checkGamepadInputs(); e.saveSettings(); } catch (err) { /* egal */ } }
+  /* Hinweis, wenn ein Controller einem Spieler zugeordnet wird */
+  let last = JSON.stringify(e.gamepadSelection || []);
+  setInterval(() => {
+    const cur = e.gamepadSelection || [];
+    const now = JSON.stringify(cur);
+    if (now === last) return;
+    const before = JSON.parse(last);
+    last = now;
+    cur.forEach((id, i) => { if (id && before[i] !== id) notice(t('pl2.joined', { n: i + 1 })); });
+    updatePad();
+  }, 700);
+}
+function gamepadName(id) { return String(id || '').replace(/_\d+$/, '').replace(/\s*\(.*?\)\s*/g, ' ').trim() || id; }
+function playersSheet(ov, close) {
+  const e = emu();
+  const box = $('#pm', ov);
+  const list = (e && e.gamepad && e.gamepad.gamepads) || [];
+  const ids = list.map(g => g.id + '_' + g.index);
+  const sel = (e && e.gamepadSelection) || [];
+  box.innerHTML = `<h4>${esc(t('pl2.title'))}</h4>
+    <p class="muted small" style="margin:0 4px 10px">${esc(t('pl2.intro'))}</p>
+    ${ids.length ? `<div class="group">${[0, 1, 2, 3].map(i => `<div class="row"><span class="ico" style="background:${['#3a8ce0', '#e5433d', '#2fb784', '#e0a400'][i]}">${i + 1}</span><span class="lbl">${esc(t('pl2.player', { n: i + 1 }))}</span>
+      <select class="select" data-pl="${i}"><option value="">${esc(i === 0 ? t('pl2.touch') : t('pl2.none'))}</option>${ids.map(id => `<option value="${esc(id)}" ${sel[i] === id ? 'selected' : ''}>${esc(gamepadName(id))}</option>`).join('')}</select></div>`).join('')}</div>`
+      : `<div class="empty-s">${esc(t('pl2.noPads'))}</div>`}
+    <div class="btn-row" style="margin-top:14px"><button class="btn" data-b>${esc(t('c.back'))}</button>${ids.length > 1 ? `<button class="btn" data-sw>${esc(t('pl2.swap'))}</button>` : ''}</div>`;
+  const apply = () => { try { e.updateGamepadLabels && e.updateGamepadLabels(); } catch (err) { /* egal */ } updatePad(); };
+  $$('[data-pl]', box).forEach(s => s.onchange = () => {
+    const pl = Number(s.dataset.pl), v = s.value;
+    if (!e.gamepadSelection) return;
+    for (let i = 0; i < e.gamepadSelection.length; i++) if (i !== pl && v && e.gamepadSelection[i] === v) e.gamepadSelection[i] = '';
+    e.gamepadSelection[pl] = v;
+    Sfx.tap(); apply(); playersSheet(ov, close);
+  });
+  if ($('[data-sw]', box)) $('[data-sw]', box).onclick = () => {
+    const a = e.gamepadSelection[0]; e.gamepadSelection[0] = e.gamepadSelection[1] || ''; e.gamepadSelection[1] = a || '';
+    Sfx.tap(); apply(); playersSheet(ov, close);
+  };
+  $('[data-b]', box).onclick = () => { Sfx.back(); renderMenu(ov, close); };
 }
 
 /* EmulatorJS merkt sich Einstellungen pro Spiel – unsere Vorgaben dort eintragen */
@@ -487,6 +676,7 @@ function guardSaveMount() {
 async function onGameStart() {
   P.started = true;
   guardSaveMount();
+  setupPlayers();
   hideMsg();
   ['#b-qs', '#b-ff'].forEach(s => $(s).disabled = false);
   await sleep(300);
@@ -507,8 +697,9 @@ async function onGameStart() {
   P.sys = sysById(rom.system);
   const sys = P.sys;
   setupBar();
-  P.rewind = Settings.get('rewind') !== false && REWIND_SYS.includes(sys.id);
+  P.rewind = pref('rewind') !== false && REWIND_SYS.includes(sys.id);
   setupPad();
+  setupGestures();
   showMsg(t('pl.loading'));
 
   if (sys.threads && !window.crossOriginIsolated) {

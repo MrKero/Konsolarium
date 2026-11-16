@@ -8,6 +8,62 @@
 
 const Pad = (() => {
   const SKINS = ['konsolarium', 'glas', 'klassisch', 'farbig', 'neon', 'minimal'];
+  /* Gehäuse-Skins: eigene Entwürfe mit Kunststoff-Gehäuse hinter den Tasten (Spielbild oben bzw. mittig) */
+  const BODY_SKINS = ['kreide', 'kobalt', 'koralle', 'graphit', 'salbei', 'mitternacht'];
+  const ALL_SKINS = SKINS.concat(BODY_SKINS);
+  const isBody = k => BODY_SKINS.includes(k);
+  /* Seitenverhältnis des Spielbilds je Konsole (für Gehäuse- und Bild-Skins) */
+  const ASPECT = {
+    gb: 10 / 9, gbc: 10 / 9, segaGG: 10 / 9, gba: 3 / 2, nds: 2 / 3, psp: 480 / 272, lynx: 160 / 102,
+    ngp: 160 / 152, ws: 224 / 144, vb: 384 / 224
+  };
+  const aspectOf = sysId => ASPECT[sysId] || 4 / 3;
+  /* Rechtecke für Spielbild und Skin-Bild berechnen.
+     kind: 'none' (Spiel füllt alles), 'body' (Gehäuse-Skin), 'img' (eigenes Bild) */
+  function frameRects(W, H, sysId, kind, img) {
+    const full = { l: 0, t: 0, w: W, h: H };
+    if (!W || !H || kind === 'none') return { game: full, img: null };
+    const a = aspectOf(sysId), portrait = H >= W;
+    if (kind === 'body') {
+      if (portrait) {
+        const gh = Math.round(Math.min(W / a, H * 0.58));
+        return { game: { l: 0, t: 0, w: W, h: gh }, img: null };
+      }
+      const gw = Math.round(Math.min(H * a, W));
+      return { game: { l: Math.round((W - gw) / 2), t: 0, w: gw, h: H }, img: null };
+    }
+    if (!img || !img.w || !img.h) return { game: full, img: null };
+    if (portrait) {
+      let iw = W, ih = W * img.h / img.w;
+      if (ih > H * 0.72) { ih = H * 0.72; iw = ih * img.w / img.h; }
+      const free = H - ih, gh = Math.min(W / a, free);
+      return { game: { l: 0, t: Math.round((free - gh) / 2), w: W, h: Math.round(gh) }, img: { l: Math.round((W - iw) / 2), t: Math.round(H - ih), w: Math.round(iw), h: Math.round(ih) } };
+    }
+    /* Querformat: Bild füllt die Fläche, Spielbild in der Mitte */
+    const sc = Math.max(W / img.w, H / img.h), iw = img.w * sc, ih = img.h * sc;
+    const gw = Math.round(Math.min(H * a, W));
+    return { game: { l: Math.round((W - gw) / 2), t: 0, w: gw, h: H }, img: { l: Math.round((W - iw) / 2), t: Math.round((H - ih) / 2), w: Math.round(iw), h: Math.round(ih) } };
+  }
+  /* Gehäuse-Fläche bzw. Skin-Bild hinter dem Spielbild zeichnen */
+  function paintBody(el, kind, skin, rects, imgUrl) {
+    el.className = 'kbody';
+    el.hidden = kind === 'none';
+    if (kind === 'none') { el.innerHTML = ''; return; }
+    el.dataset.kind = kind;
+    el.dataset.skin = kind === 'body' ? skin : '';
+    const r = el.parentElement ? el.parentElement.getBoundingClientRect() : { width: 0, height: 0 };
+    el.dataset.o = r.width > r.height ? 'q' : 'p';
+    if (kind === 'body') {
+      if (!el.querySelector('.kb-mark')) el.innerHTML = '<span class="kb-mark">KONSOLARIUM</span>';
+      el.style.setProperty('--gh', rects.game.h + 'px');
+      return;
+    }
+    let im = el.querySelector('img');
+    if (!im) { el.innerHTML = '<img alt="">'; im = el.querySelector('img'); }
+    if (im.getAttribute('src') !== imgUrl) im.src = imgUrl;
+    const q = rects.img;
+    if (q) Object.assign(im.style, { left: q.l + 'px', top: q.t + 'px', width: q.w + 'px', height: q.h + 'px' });
+  }
   const SIZE = { face: 64, pill: 66, sh: 80, sm: 46, dpad: 150, stick: 128 };
   const AXIS = 0x7fff;
   const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 6.2v11.6a.8.8 0 0 1-1.3.6L12.5 12l7.2-6.4a.8.8 0 0 1 1.3.6zm-9 0v11.6a.8.8 0 0 1-1.3.6L3.5 12l7.2-6.4a.8.8 0 0 1 1.3.6z"/></svg>';
@@ -144,7 +200,7 @@ const Pad = (() => {
 
   /* ---------- Gamepad erzeugen ---------- */
   function create(root, opts) {
-    const o = Object.assign({ sys: 'snes', send: () => {}, rewind: false, preview: false, zoom: 1 }, opts || {});
+    const o = Object.assign({ sys: 'snes', send: () => {}, rewind: false, preview: false, zoom: 1, look: null }, opts || {});
     const ctrls = controlsFor(o.sys, o.rewind);
     const byId = {};
     root.classList.add('kpad');
@@ -192,7 +248,11 @@ const Pad = (() => {
       el.style.setProperty('--fs', f * p.s);
     }
     function layout() {
-      root.dataset.skin = SKINS.includes(Settings.get('padSkin')) ? Settings.get('padSkin') : 'konsolarium';
+      const lk = o.look ? o.look() : { skin: Settings.get('padSkin') };
+      const sk = ALL_SKINS.includes(lk.skin) ? lk.skin : 'konsolarium';
+      root.dataset.skin = sk;
+      root.toggleAttribute('data-body', isBody(sk));
+      root.classList.toggle('ghost', !!lk.ghost);
       root.style.setProperty('--pad-op', String(Math.min(1, Math.max(0.25, Number(Settings.get('padOpacity')) || 0.85))));
       Object.keys(byId).forEach(place);
     }
@@ -407,5 +467,5 @@ const Pad = (() => {
     };
   }
 
-  return { SKINS, create, schemeOf, hasTouch, gamepadConnected, resetAll: () => Settings.set('padLayouts', {}) };
+  return { SKINS, BODY_SKINS, ALL_SKINS, isBody, aspectOf, frameRects, paintBody, create, schemeOf, hasTouch, gamepadConnected, resetAll: () => Settings.set('padLayouts', {}) };
 })();

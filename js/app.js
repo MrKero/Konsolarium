@@ -39,7 +39,12 @@ const ICON = {
   timer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>',
   backup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11M7.5 9.5L12 14l4.5-4.5"/><path d="M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3"/></svg>',
   restore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14V3M7.5 7.5L12 3l4.5 4.5"/><path d="M4 15v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3"/></svg>',
-  swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg>'
+  swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6" rx="1"/><rect x="10.5" y="6" width="3" height="11" rx="1"/><rect x="15.5" y="9" width="3" height="8" rx="1"/></svg>',
+  hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7.5a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.2L3.6 16a1.6 1.6 0 0 1 2.4-2.1L8 15.5"/></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></svg>',
+  help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.8"/><path d="M12 17.2h.01"/></svg>',
+  sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>'
 };
 
 const UI = { sysQuery: '', sysFilter: 'all', libQuery: '', libSystem: 'all', libFav: false, scroll: {} };
@@ -62,7 +67,7 @@ window.addEventListener('hashchange', () => {
 function tabFor(hash) {
   if (hash.startsWith('#/library') || hash.startsWith('#/rom')) return 'library';
   if (hash.startsWith('#/saves')) return 'saves';
-  if (hash.startsWith('#/settings') || hash.startsWith('#/cheats')) return 'settings';
+  if (hash.startsWith('#/settings') || hash.startsWith('#/cheats') || hash.startsWith('#/stats')) return 'settings';
   return 'systems';
 }
 
@@ -101,7 +106,11 @@ async function render() {
     else if (hash === '#/settings/about') viewAbout(view);
     else if (hash === '#/settings/cheats') await viewCheatGames(view);
     else if (hash === '#/settings/backup') await viewBackup(view);
-    else if (hash === '#/settings/controller') viewController(view);
+    else if (hash === '#/settings/controller') await viewController(view);
+    else if (hash === '#/settings/emulators') await viewEmulators(view);
+    else if (hash === '#/stats') await viewStats(view);
+    else if (hash === '#/settings/help') viewHelp(view);
+    else if ((m = hash.match(/^#\/romprefs\/([\w-]+)$/))) await viewRomPrefs(view, m[1]);
     else if ((m = hash.match(/^#\/cheats\/([\w-]+)$/))) await viewCheats(view, m[1]);
     else await viewSystems(view);
   } catch (e) {
@@ -690,6 +699,7 @@ async function viewRom(view, id) {
         <h3 class="h3"></h3>
         <div class="group">
           <button class="row" id="fav"><span class="ico" style="background:#e0a400">${r.fav ? ICON.starFill : ICON.star}</span><span class="lbl">${esc(t(r.fav ? 'rom.unfav' : 'rom.fav'))}</span></button>
+          ${s.lab ? '' : `<button class="row" id="rprefs"><span class="ico" style="background:#3a8ce0">${ICON.sliders}</span><span class="lbl">${esc(t('gp.title'))}<span class="sub">${esc(prefsSummary(r))}</span></span>${ICON.chev}</button>`}
           ${s.lab ? '' : `<button class="row" id="cheats"><span class="ico" style="background:#8c5cff">${ICON.wand}</span><span class="lbl">${esc(t('rom.cheats'))}</span><span class="val">${cheats.length || ''}</span>${ICON.chev}</button>`}
           <button class="row" id="ren"><span class="ico" style="background:#3a8ce0">${ICON.edit}</span><span class="lbl">${esc(t('rom.rename'))}</span></button>
           <button class="row" id="cov"><span class="ico" style="background:#e07a3a">${ICON.image}</span><span class="lbl">${esc(t(r.cover ? 'cover.change' : 'cover.set'))}<span class="sub">${esc(t('cover.hint'))}</span></span></button>
@@ -722,6 +732,7 @@ async function viewRom(view, id) {
   if ($('#cont')) $('#cont').onclick = () => { Sfx.coin(); playRom(id, states[0].id); };
   $('#fav').onclick = async () => { r.fav = !r.fav; await DB.put('roms', r); Sfx.toggle(r.fav); render(); };
   if ($('#cheats')) $('#cheats').onclick = () => { Sfx.tap(); go('#/cheats/' + id); };
+  if ($('#rprefs')) $('#rprefs').onclick = () => { Sfx.tap(); go('#/romprefs/' + id); };
   $('#ren').onclick = async () => { const n = await promptDlg(t('rom.newName'), r.name); if (n) { r.name = n; await DB.put('roms', r); Sfx.ok(); render(); } };
   $('#chs').onclick = async () => {
     const ext = r.fileName.split('.').pop().toLowerCase();
@@ -960,6 +971,7 @@ async function viewSettings(view) {
   const theme = Settings.get('theme');
   const ff = Settings.get('ffSpeed');
   view.innerHTML = `<div class="topbar" style="margin-top:4px"><h1 class="title-xl">${esc(t('tab.settings'))}</h1></div>
+    <div class="group" style="margin-top:14px">${linkRow('#/settings/help', ICON.help, '#ff7a45', t('help.title'), '')}</div>
     <h3 class="h3">${esc(t('set.sound'))}</h3>
     <div class="group">
       ${switchRow('s-gs', ICON.sound, '#ff7a45', t('set.gameSound'), Settings.get('gameSound'))}
@@ -981,14 +993,15 @@ async function viewSettings(view) {
         <span class="sub-below">${esc(t('set.autoIntSub'))}</span></div>
       ${switchRow('s-as', ICON.saves, '#2fb784', t('set.autosave'), Settings.get('autosave'))}
       ${switchRow('s-rw', ICON.rewind, '#8c5cff', t('set.rewind'), Settings.get('rewind') !== false, t('set.rewindSub'))}
+      ${switchRow('s-ge', ICON.hand, '#e07a3a', t('set.gestures'), Settings.get('gestures') !== false, t('set.gesturesSub'))}
       ${linkRow('#/settings/controller', ICON.consoles, '#3a8ce0', t('set.controller'), esc(t('skin.' + (Settings.get('padSkin') || 'konsolarium'))))}
       ${linkRow('#/settings/cheats', ICON.wand, '#8c5cff', t('set.cheats'), '')}
     </div>
     <h3 class="h3">${esc(t('set.data'))}</h3>
     <div class="group" style="margin-bottom:10px">${linkRow('#/settings/backup', ICON.backup, '#2fb784', t('set.backup'), esc(Backup.last() ? fmtDate(Backup.last()) : t('bk.neverShort')))}</div>
     <div class="group" id="offgroup">
-      <div class="row"><span class="ico" style="background:#2fa4e7">${ICON.cloud}</span><span class="lbl">${esc(t('set.offline'))}<span class="sub" id="off-sub">${esc(t('set.offlineSub', { n: CORE_TOTAL_MB }))}</span><div class="progress" hidden><div></div></div></span>
-        <button class="btn small" id="off-go">${ICON.cloud}</button></div>
+      ${linkRow('#/settings/emulators', ICON.chip, '#2fa4e7', t('emu.title'), '<span id="emuval">–</span>')}
+      ${linkRow('#/stats', ICON.chart, '#ff5ca8', t('st.title'), '')}
       <div class="row"><span class="ico" style="background:#5a6b85">${ICON.disk}</span><span class="lbl">${esc(t('set.storage'))}</span><span class="val" id="storeval">–</span></div>
     </div>
     <h3 class="h3">${esc(t('set.updates'))}</h3>
@@ -1007,16 +1020,15 @@ async function viewSettings(view) {
 
   $$('[data-go]', view).forEach(b => b.onclick = () => { Sfx.tap(); go(b.dataset.go); });
   const sw = (id, key) => { const el = $('#' + id); el.onchange = () => { Settings.set(key, el.checked); Sfx.toggle(el.checked); }; };
-  sw('s-gs', 'gameSound'); sw('s-cl', 'clicks'); sw('s-as', 'autosave'); sw('s-au', 'autoUpdate'); sw('s-rw', 'rewind');
+  sw('s-gs', 'gameSound'); sw('s-cl', 'clicks'); sw('s-as', 'autosave'); sw('s-au', 'autoUpdate'); sw('s-rw', 'rewind'); sw('s-ge', 'gestures');
   $$('#aiseg button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('autosaveMin', Number(b.dataset.v)); $$('#aiseg button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
   $$('#themeseg button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('theme', b.dataset.v); render(); });
   $$('#ffseg button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('ffSpeed', Number(b.dataset.v)); $$('#ffseg button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
   if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { $('#storeval').textContent = fmtBytes(e.usage); });
-  if (!('caches' in window)) $('#off-go').disabled = true;
-  else coresCachedCount().then(n => {
-    if (n >= OFFLINE_FILES.length) { $('#off-sub').textContent = t('set.offlineDone'); $('#off-go').innerHTML = ICON.check; $('#off-go').disabled = true; Settings.set('offlineAll', true); }
-  });
-  $('#off-go').onclick = () => runOfflineDownload($('#offgroup'));
+  if ('caches' in window) {
+    const packs = emulatorPacks();
+    Promise.all(packs.map(packStatus)).then(st => { const el = $('#emuval'); if (el) el.textContent = t('emu.count', { n: st.filter(Boolean).length, m: packs.length }); });
+  }
   $('#chk').onclick = async () => {
     Sfx.tap();
     const res = $('#chkres'); res.textContent = t('upd.checking');
@@ -1030,20 +1042,88 @@ async function viewSettings(view) {
   $('#reset').onclick = resetFlow;
 }
 
-/* ---------- Ansicht: Controller (Skins, Transparenz, Größe) ---------- */
+/* ---------- Ansicht: Controller (Skins je Konsole, Gehäuse, eigene Bilder) ---------- */
 const PREVIEW_SYS = ['gba', 'snes', 'psx', 'n64'];
-function viewController(view) {
+const PREVIEW_LABEL = { gba: 'GBA', snes: 'SNES', psx: 'PS1', n64: 'N64' };
+const PAD_SYSTEMS = () => SYSTEMS.filter(s => s.ejs && !s.lab).slice().sort((a, b) => a.year - b.year || a.name.localeCompare(b.name));
+
+function skinCard(k, pressed, label, extra) {
+  let sw;
+  if (k === '' || k === 'auto') sw = '<span class="sw sw-inherit"><i></i></span>';
+  else if (k === 'bild') sw = `<span class="sw sw-img">${extra || ''}</span>`;
+  else if (Pad.isBody(k)) sw = `<span class="sw sw-body" data-skin="${k}"><i></i><i></i><i></i></span>`;
+  else sw = `<span class="sw sw-${k}"><i></i><i></i><i></i></span>`;
+  return `<button class="skin-card" data-k="${k}" aria-pressed="${pressed}">${sw}<span>${esc(label)}</span></button>`;
+}
+async function skinImgInfo(sysId) {
+  const out = { p: null, q: null };
+  for (const o of ['p', 'q']) {
+    const rec = await SkinStore.get(sysId, o).catch(() => null);
+    if (rec && rec.blob) out[o] = { url: URL.createObjectURL(rec.blob), w: rec.w, h: rec.h, hide: !!rec.hide };
+  }
+  return out;
+}
+/* Bild verkleinern (max. 1800 px) und je Konsole + Ausrichtung speichern */
+async function importSkinImage(sysId, o, file) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(bmp, 0, 0, w, h);
+  const keepAlpha = /png|webp|gif/.test(file.type);
+  const blob = await new Promise(res => c.toBlob(res, keepAlpha ? 'image/png' : 'image/jpeg', 0.9));
+  if (!blob) throw new Error('image');
+  const prev = await SkinStore.get(sysId, o).catch(() => null);
+  const other = await SkinStore.get(sysId, o === 'p' ? 'q' : 'p').catch(() => null);
+  const hide = prev ? !!prev.hide : other ? !!other.hide : false;
+  await SkinStore.put(sysId, o, blob, { w, h, hide });
+  const by = Object.assign({}, Settings.get('padSkinBySys') || {});
+  by[sysId] = 'bild';
+  Settings.set('padSkinBySys', by);
+}
+
+async function viewController(view) {
   if (!UI.padPrev) UI.padPrev = 'snes';
-  const skin = Settings.get('padSkin') || 'konsolarium';
+  if (!UI.padScope) UI.padScope = 'all';
+  if (!UI.padOri) UI.padOri = 'p';
+  const scope = UI.padScope, sysS = scope !== 'all' ? sysById(scope) : null;
+  if (scope !== 'all' && !sysS) { UI.padScope = 'all'; return viewController(view); }
+  const imgs = sysS ? await skinImgInfo(scope) : { p: null, q: null };
+  const anyImg = imgs.p || imgs.q;
+  const global = () => Settings.get('padSkin') || 'konsolarium';
+  const chosen = () => (sysS ? ((Settings.get('padSkinBySys') || {})[scope] || '') : global());
   const mode = Settings.get('padMode') || 'auto';
+  const cur = chosen();
   view.innerHTML = `${topbar('#/settings')}<h1 class="title-xl">${esc(t('set.controller'))}</h1>
     <p class="tagline">${esc(t('ctl.intro'))}</p>
+    <div class="group"><div class="row"><span class="ico" style="background:#3a8ce0">${ICON.consoles}</span><span class="lbl">${esc(t('ctl.scope'))}</span>
+      <select class="select" id="scope"><option value="all">${esc(t('ctl.scopeAll'))}</option>${PAD_SYSTEMS().map(x => `<option value="${x.id}" ${x.id === scope ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div></div>
     <div class="pad-preview">
-      <div class="pp-phone"><div class="pp-screen"></div><div id="ppad"></div></div>
-      <div class="seg pp-sys" id="ppsys">${PREVIEW_SYS.map(id => `<button data-v="${id}" aria-pressed="${UI.padPrev === id}">${{ gba: 'GBA', snes: 'SNES', psx: 'PS1', n64: 'N64' }[id]}</button>`).join('')}</div>
+      <div class="pp-phone ${UI.padOri}" id="ppphone"><div class="pp-stage" id="ppstage"><div class="kbody" id="ppbody" hidden></div><div class="pp-screen" id="ppscreen"></div><div id="ppad"></div></div></div>
+      <div class="pp-ctl">
+        ${sysS ? '' : `<div class="seg" id="ppsys">${PREVIEW_SYS.map(id => `<button data-v="${id}" aria-pressed="${UI.padPrev === id}">${PREVIEW_LABEL[id]}</button>`).join('')}</div>`}
+        <div class="seg" id="ppori">${['p', 'q'].map(o => `<button data-v="${o}" aria-pressed="${UI.padOri === o}">${esc(t('ctl.ori.' + o))}</button>`).join('')}</div>
+      </div>
     </div>
-    <h3 class="h3">${esc(t('ctl.skin'))}</h3>
-    <div class="skin-grid" id="skins">${Pad.SKINS.map(k => `<button class="skin-card" data-k="${k}" aria-pressed="${k === skin}"><span class="sw sw-${k}"><i></i><i></i><i></i></span><span>${esc(t('skin.' + k))}</span></button>`).join('')}</div>
+    ${sysS ? `<p class="muted small" style="margin:12px 4px 0">${esc(t('ctl.scopeHint', { sys: sysS.name }))}</p>` : ''}
+    <h3 class="h3">${esc(t('ctl.keys'))}</h3>
+    <div class="skin-grid">
+      ${sysS ? skinCard('', cur === '', t('ctl.likeAll')) : ''}
+      ${anyImg ? skinCard('bild', cur === 'bild', t('skin.bild'), `<img src="${anyImg.url}" alt="">`) : ''}
+      ${Pad.SKINS.map(k => skinCard(k, cur === k, t('skin.' + k))).join('')}
+    </div>
+    <h3 class="h3">${esc(t('ctl.bodies'))}</h3>
+    <p class="muted small" style="margin:-4px 4px 10px">${esc(t('ctl.bodiesSub'))}</p>
+    <div class="skin-grid">${Pad.BODY_SKINS.map(k => skinCard(k, cur === k, t('skin.' + k))).join('')}</div>
+    <h3 class="h3">${esc(t('ctl.img'))}</h3>
+    ${sysS ? `<p class="muted small" style="margin:-4px 4px 10px">${esc(t('ctl.imgIntro'))}</p>
+      <div class="img-slots">${['p', 'q'].map(o => `<div class="img-slot ${o}">
+        <button class="ithumb" data-pick="${o}" aria-label="${esc(t('ctl.imgPick'))}">${imgs[o] ? `<img src="${imgs[o].url}" alt="">` : ICON.plus}</button>
+        <b>${esc(t('ctl.ori.' + o))}</b>
+        ${imgs[o] ? `<button class="btn small" data-del="${o}">${ICON.trash}${esc(t('c.delete'))}</button>` : `<button class="btn small" data-pick="${o}">${ICON.image}${esc(t('ctl.imgPick'))}</button>`}</div>`).join('')}</div>
+      ${anyImg ? `<div class="group" style="margin-top:12px">${switchRow('imghide', ICON.hand, '#5a6b85', t('ctl.imgHide'), !!anyImg.hide, t('ctl.imgHideSub'))}</div>
+        <div class="note" style="margin-top:12px">${esc(t('ctl.imgArrange', { m: t('pl.menu'), a: t('pad.arrange') }))}</div>` : ''}`
+      : `<div class="note">${esc(t('ctl.imgPickSys'))}</div>`}
     <h3 class="h3">${esc(t('ctl.adjust'))}</h3>
     <div class="group">
       <div class="row stack"><span class="lbl">${esc(t('ctl.opacity'))}</span><input type="range" class="range" id="pop" min="30" max="100" step="5" value="${Math.round((Number(Settings.get('padOpacity')) || 0.85) * 100)}"></div>
@@ -1055,20 +1135,288 @@ function viewController(view) {
     <div class="note" style="margin-top:16px">${esc(t('ctl.arrangeHint'))}</div>
     <div class="group" style="margin-top:16px"><button class="row" id="preset"><span class="ico" style="background:#5a6b85">${ICON.refresh}</span><span class="lbl">${esc(t('ctl.resetAll'))}</span></button></div>`;
   bindBack(view);
+
+  const ppSys = () => (sysS ? scope : UI.padPrev);
+  const look = () => {
+    let k = chosen() || global();
+    if (k === 'bild') {
+      const im = imgs[UI.padOri], g = global();
+      if (im) return { kind: 'img', skin: Pad.SKINS.includes(g) ? g : 'glas', ghost: im.hide, img: im };
+      k = g;
+    }
+    if (!Pad.ALL_SKINS.includes(k)) k = 'konsolarium';
+    return { kind: Pad.isBody(k) ? 'body' : 'none', skin: k };
+  };
   let prev = null;
-  const mk = () => { if (prev) prev.destroy(); prev = Pad.create($('#ppad'), { sys: UI.padPrev, preview: true, rewind: ['gba', 'snes'].includes(UI.padPrev), zoom: 0.5 }); };
+  const paint = () => {
+    const st = $('#ppstage'); if (!st) return;
+    const r = st.getBoundingClientRect(), lk = look();
+    const rects = Pad.frameRects(r.width, r.height, ppSys(), lk.kind, lk.img);
+    const a = Pad.aspectOf(ppSys()), g = rects.game, portrait = r.height >= r.width;
+    let w = g.w, h = w / a;
+    if (h > g.h) { h = g.h; w = h * a; }
+    Object.assign($('#ppscreen').style, { left: (g.l + (g.w - w) / 2) + 'px', top: (g.t + (portrait ? 0 : (g.h - h) / 2)) + 'px', width: w + 'px', height: h + 'px' });
+    Pad.paintBody($('#ppbody'), lk.kind, lk.skin, rects, lk.img && lk.img.url);
+    if (prev) prev.layout();
+  };
+  const mk = () => {
+    if (prev) prev.destroy();
+    const sid = ppSys();
+    prev = Pad.create($('#ppad'), { sys: sid, preview: true, rewind: Settings.get('rewind') !== false && REWIND_SYS.includes(sid), zoom: 0.5, look });
+    paint();
+    requestAnimationFrame(paint);
+  };
   mk();
+  $('#scope').onchange = e => { Sfx.tap(); UI.padScope = e.target.value; render(); };
   $$('#ppsys button').forEach(b => b.onclick = () => { Sfx.tap(); UI.padPrev = b.dataset.v; $$('#ppsys button').forEach(x => x.setAttribute('aria-pressed', x === b)); mk(); });
-  $$('#skins .skin-card').forEach(b => b.onclick = () => {
-    Sfx.toggle(true); Settings.set('padSkin', b.dataset.k);
-    $$('#skins .skin-card').forEach(x => x.setAttribute('aria-pressed', x === b)); prev.layout();
+  $$('#ppori button').forEach(b => b.onclick = () => {
+    Sfx.tap(); UI.padOri = b.dataset.v;
+    $$('#ppori button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    $('#ppphone').className = 'pp-phone ' + UI.padOri;
+    mk();
   });
+  $$('.skin-card', view).forEach(b => b.onclick = () => {
+    Sfx.toggle(true);
+    const k = b.dataset.k;
+    if (sysS) {
+      const by = Object.assign({}, Settings.get('padSkinBySys') || {});
+      if (k) by[scope] = k; else delete by[scope];
+      Settings.set('padSkinBySys', by);
+    } else Settings.set('padSkin', k);
+    $$('.skin-card', view).forEach(x => x.setAttribute('aria-pressed', x === b));
+    paint();
+  });
+  $$('[data-pick]', view).forEach(b => b.onclick = () => {
+    Sfx.tap();
+    const o = b.dataset.pick;
+    pickFile('image', async files => {
+      try { await importSkinImage(scope, o, files[0]); UI.padOri = o; Sfx.ok(); toast(t('ctl.imgSaved')); render(); }
+      catch (e) { Sfx.err(); toast(t('cover.bad'), 'err'); }
+    });
+  });
+  $$('[data-del]', view).forEach(b => b.onclick = async () => {
+    await SkinStore.del(scope, b.dataset.del);
+    const left = await skinImgInfo(scope);
+    if (!left.p && !left.q) {
+      const by = Object.assign({}, Settings.get('padSkinBySys') || {});
+      if (by[scope] === 'bild') { delete by[scope]; Settings.set('padSkinBySys', by); }
+    }
+    Sfx.ok(); render();
+  });
+  if ($('#imghide')) $('#imghide').onchange = async e => {
+    await SkinStore.setHide(scope, e.target.checked);
+    ['p', 'q'].forEach(o => { if (imgs[o]) imgs[o].hide = e.target.checked; });
+    Sfx.toggle(e.target.checked); paint();
+  };
   $('#pop').oninput = e => { Settings.set('padOpacity', Number(e.target.value) / 100); prev.layout(); };
   $('#psz').oninput = e => { Settings.set('padScale', Number(e.target.value) / 100); prev.layout(); };
   $$('#pmode button').forEach(b => b.onclick = () => { Sfx.tap(); Settings.set('padMode', b.dataset.v); $$('#pmode button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
   $('#preset').onclick = async () => {
-    if (await confirmDlg(t('ctl.resetAll'), t('ctl.resetAllX'), t('pad.reset'), true)) { Pad.resetAll(); Sfx.ok(); toast(t('ctl.resetDone')); }
+    if (await confirmDlg(t('ctl.resetAll'), t('ctl.resetAllX'), t('pad.reset'), true)) { Pad.resetAll(); Sfx.ok(); toast(t('ctl.resetDone')); prev.layout(); }
   };
+}
+
+/* ---------- Ansicht: Anleitung (aufklappbare Themen) ---------- */
+const HELP = [
+  ['start', 'library', '#3a8ce0'], ['bios', 'chip', '#5a6b85'], ['play', 'consoles', '#8c5cff'], ['saves', 'saves', '#2fb784'],
+  ['speed', 'ff', '#e0a400'], ['gestures', 'hand', '#e07a3a'], ['pad', 'sliders', '#3a8ce0'], ['skins', 'palette', '#ff5ca8'],
+  ['players', 'consoles', '#e5433d'], ['gameprefs', 'sliders', '#2fa4e7'], ['covers', 'image', '#2fb784'], ['cheats', 'chip', '#e0a400'],
+  ['stats', 'chart', '#ff5ca8'], ['backup', 'backup', '#2fb784'], ['emus', 'chip', '#2fa4e7'], ['home', 'refresh', '#5a6b85'], ['labs', 'info', '#8c5cff']
+];
+function viewHelp(view) {
+  view.innerHTML = `${topbar('#/settings')}<h1 class="title-xl">${esc(t('help.title'))}</h1>
+    <p class="tagline">${esc(t('help.intro'))}</p>
+    <div class="group help-list">${HELP.map(([id, ic, col]) => `<details class="help-item" data-h="${id}">
+      <summary><span class="ico" style="background:${col}">${ICON[ic] || ICON.info}</span><span class="lbl">${esc(t('help.' + id + '.t'))}</span><span class="help-chev">${ICON.chev}</span></summary>
+      <ul>${t('help.' + id + '.b').split('|').map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`).join('')}</div>`;
+  bindBack(view);
+  /* Nur ein Thema gleichzeitig offen – bleibt übersichtlich */
+  $$('.help-item', view).forEach(d => d.addEventListener('toggle', () => {
+    if (!d.open) return;
+    Sfx.tap();
+    $$('.help-item', view).forEach(o => { if (o !== d) o.open = false; });
+    setTimeout(() => d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 30);
+  }));
+}
+
+/* ---------- Ansicht: Emulatoren verwalten ---------- */
+async function viewEmulators(view) {
+  const packs = emulatorPacks();
+  const can = 'caches' in window;
+  const st = can ? await Promise.all(packs.map(packStatus)) : packs.map(() => false);
+  const total = packs.reduce((n, p) => n + p.bytes, 0);
+  const have = packs.reduce((n, p, i) => n + (st[i] ? p.bytes : 0), 0);
+  const nHave = st.filter(Boolean).length;
+  view.innerHTML = `${topbar('#/settings')}<h1 class="title-xl">${esc(t('emu.title'))}</h1>
+    <p class="tagline">${esc(t('emu.intro'))}</p>
+    <div class="emu-sum">
+      <div class="emu-nums"><b>${esc(fmtBytes(have))}</b><span>${esc(t('emu.of', { n: fmtBytes(total) }))}</span></div>
+      <div class="emu-meter" role="img" aria-label="${esc(t('emu.count', { n: nHave, m: packs.length }))}"><div style="width:${total ? Math.max(have ? 2 : 0, Math.round(have / total * 100)) : 0}%"></div></div>
+      <div class="emu-cnt">${esc(t('emu.count', { n: nHave, m: packs.length }))}</div>
+      <div class="progress" id="emprog" hidden><div></div></div>
+      <div class="btn-row">
+        <button class="btn primary" id="emall" ${!can || nHave === packs.length ? 'disabled' : ''}>${ICON.download}${esc(t('emu.loadAll'))}</button>
+        <button class="btn" id="emdel" ${!can || !nHave ? 'disabled' : ''}>${ICON.trash}${esc(t('emu.delAll'))}</button>
+      </div>
+    </div>
+    <div class="group" style="margin-top:16px">${packs.map((p, i) => `<div class="row emu-row ${st[i] ? 'have' : ''}" data-p="${esc(p.id)}">
+      <span class="lbl">${esc(p.name)}<span class="sub">${esc(p.systems.map(x => x.name).join(', '))}</span></span>
+      <span class="val">${st[i] ? `<span class="emu-ok">${esc(t('emu.loaded'))}</span>` : ''}${esc(fmtBytes(p.bytes))}</span>
+      <button class="btn small icon" data-act="${st[i] ? 'del' : 'load'}" aria-label="${esc(t(st[i] ? 'emu.del' : 'emu.load'))}" ${can ? '' : 'disabled'}>${st[i] ? ICON.trash : ICON.download}</button></div>`).join('')}</div>
+    <p class="muted small" style="margin:14px 4px">${esc(t('emu.note'))}</p>`;
+  bindBack(view);
+  let busy = false;
+  const prog = (done, all) => { const pr = $('#emprog'); if (!pr) return; pr.hidden = false; pr.firstElementChild.style.width = Math.round(done / Math.max(1, all) * 100) + '%'; };
+  $$('.emu-row [data-act]', view).forEach(b => b.onclick = async () => {
+    if (busy) return;
+    const row = b.closest('.emu-row'), p = packs.find(x => x.id === row.dataset.p);
+    if (b.dataset.act === 'del') {
+      if (!(await confirmDlg(t('emu.del'), t('emu.delX', { name: p.name }), t('c.delete'), true))) return;
+      await packDelete(p); Sfx.ok(); render(); return;
+    }
+    busy = true; Sfx.tap();
+    b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+    try { await packLoad(p); Sfx.ok(); toast(t('emu.loadedX', { name: p.name })); }
+    catch (e) { Sfx.err(); toast(t('emu.fail'), 'err'); }
+    busy = false; render();
+  });
+  $('#emall').onclick = async () => {
+    if (busy) return;
+    busy = true; Sfx.tap();
+    $('#emall').disabled = true; $('#emdel').disabled = true;
+    const todo = packs.filter((p, i) => !st[i]);
+    const all = todo.reduce((n, p) => n + p.bytes, 0);
+    let done = 0;
+    prog(0, all);
+    try {
+      for (const p of todo) await packLoad(p, bytes => { done += bytes; prog(done, all); });
+      Settings.set('offlineAll', true);
+      Sfx.ok(); toast(t('set.offlineDone'));
+    } catch (e) { Sfx.err(); toast(t('emu.fail'), 'err'); }
+    busy = false; render();
+  };
+  $('#emdel').onclick = async () => {
+    if (busy) return;
+    if (!(await confirmDlg(t('emu.delAll'), t('emu.delAllX'), t('c.delete'), true))) return;
+    for (const p of packs) await packDelete(p);
+    Sfx.ok(); render();
+  };
+}
+
+/* ---------- Ansicht: Statistik ---------- */
+async function viewStats(view) {
+  const roms = await DB.all('roms');
+  const states = await DB.all('states');
+  const total = roms.reduce((n, r) => n + (r.playTime || 0), 0);
+  const sessions = roms.reduce((n, r) => n + (r.playCount || 0), 0);
+  const top = roms.filter(r => r.playTime >= 60000).sort((a, b) => b.playTime - a.playTime).slice(0, 8);
+  const bySys = {};
+  roms.forEach(r => { const k = r.system; bySys[k] = bySys[k] || { t: 0, n: 0 }; bySys[k].t += r.playTime || 0; bySys[k].n++; });
+  const sysList = Object.entries(bySys).filter(([, v]) => v.t >= 60000).sort((a, b) => b[1].t - a[1].t);
+  /* Letzte 14 Tage */
+  const pd = playDays(), days = [];
+  for (let i = 13; i >= 0; i--) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push({ d, ms: pd[dayKey(d)] || 0 }); }
+  const dMax = Math.max(...days.map(x => x.ms), 60000);
+  const week = days.slice(7).reduce((n, x) => n + x.ms, 0);
+  const wd = d => { try { return new Intl.DateTimeFormat(locale(), { weekday: 'narrow' }).format(d); } catch (e) { return ''; } };
+  const dl = d => { try { return new Intl.DateTimeFormat(locale(), { weekday: 'short', day: 'numeric', month: 'numeric' }).format(d); } catch (e) { return d.toDateString(); } };
+  const romBytes = roms.reduce((n, r) => n + (r.size || 0), 0);
+  const stBytes = states.reduce((n, s) => n + (s.size || 0), 0);
+  const tMax = top.length ? top[0].playTime : 1, sMax = sysList.length ? sysList[0][1].t : 1;
+  const bar = (label, sub, ms, max) => `<div class="sbar"><div class="sb-top"><span class="sb-l">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="sb-v">${esc(fmtDuration(ms))}</span></div>
+    <div class="sb-track"><i style="width:${Math.max(2, Math.round(ms / max * 100))}%"></i></div></div>`;
+
+  view.innerHTML = `${topbar('#/settings')}<h1 class="title-xl">${esc(t('st.title'))}</h1>
+    ${total < 60000 ? `<div class="empty" style="margin-top:20px"><div class="big">${esc(t('st.empty'))}</div><p class="muted">${esc(t('st.emptySub'))}</p>
+      <button class="btn primary" data-go="#/library" style="margin-top:12px">${ICON.library}${esc(t('tab.library'))}</button></div>` : `
+    <div class="st-hero"><b>${esc(fmtDuration(total))}</b><span>${esc(t('st.total'))}</span></div>
+    <div class="st-tiles">
+      <div><b>${esc(fmtNum(roms.length))}</b><span>${esc(t('st.games'))}</span></div>
+      <div><b>${esc(fmtNum(sessions))}</b><span>${esc(t('st.sessions'))}</span></div>
+      <div><b>${esc(fmtNum(states.length))}</b><span>${esc(t('st.states'))}</span></div>
+    </div>
+    <h3 class="h3">${esc(t('st.days'))}</h3>
+    <div class="st-days">
+      <div class="sd-cap" id="sdcap">${esc(t('st.week', { d: fmtDuration(week) }))}</div>
+      <div class="sd-plot">${days.map((x, i) => `<button class="sd-col ${i === 13 ? 'today' : ''}" data-i="${i}" aria-label="${esc(dl(x.d) + ': ' + fmtDuration(x.ms))}"><span class="sd-bar" style="height:${x.ms ? Math.max(3, Math.round(x.ms / dMax * 100)) : 0}%"></span><span class="sd-x">${esc(wd(x.d))}</span></button>`).join('')}</div>
+    </div>
+    ${top.length ? `<h3 class="h3">${esc(t('st.top'))}</h3><div class="group st-list">${top.map(r => bar(r.name, (sysById(r.system) || {}).name || '', r.playTime, tMax)).join('')}</div>` : ''}
+    ${sysList.length ? `<h3 class="h3">${esc(t('st.bySys'))}</h3><div class="group st-list">${sysList.map(([k, v]) => bar((sysById(k) || { name: k }).name, nGames(v.n), v.t, sMax)).join('')}</div>` : ''}`}
+    <h3 class="h3">${esc(t('st.storage'))}</h3>
+    <div class="group">
+      <div class="row"><span class="ico" style="background:#3a8ce0">${ICON.library}</span><span class="lbl">${esc(t('st.romBytes'))}</span><span class="val">${esc(fmtBytes(romBytes))}</span></div>
+      <div class="row"><span class="ico" style="background:#2fb784">${ICON.saves}</span><span class="lbl">${esc(t('st.stBytes'))}</span><span class="val">${esc(fmtBytes(stBytes))}</span></div>
+      <button class="row" data-go="#/settings/emulators"><span class="ico" style="background:#2fa4e7">${ICON.chip}</span><span class="lbl">${esc(t('emu.title'))}</span><span class="val" id="stemu">–</span>${ICON.chev}</button>
+      <div class="row"><span class="ico" style="background:#5a6b85">${ICON.disk}</span><span class="lbl">${esc(t('set.storage'))}</span><span class="val" id="ststore">–</span></div>
+    </div>`;
+  bindBack(view);
+  $$('[data-go]', view).forEach(b => b.onclick = () => { Sfx.tap(); go(b.dataset.go); });
+  $$('.sd-col', view).forEach(b => b.onclick = () => {
+    const x = days[Number(b.dataset.i)];
+    $$('.sd-col', view).forEach(c => c.classList.toggle('sel', c === b));
+    $('#sdcap').textContent = dl(x.d) + ': ' + (x.ms ? fmtDuration(x.ms) : t('st.none'));
+  });
+  if ('caches' in window) {
+    const packs = emulatorPacks();
+    Promise.all(packs.map(packStatus)).then(s => { const el = $('#stemu'); if (el) el.textContent = fmtBytes(packs.reduce((n, p, i) => n + (s[i] ? p.bytes : 0), 0)); });
+  }
+  if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { const el = $('#ststore'); if (el) el.textContent = fmtBytes(e.usage); });
+}
+
+/* ---------- Ansicht: Einstellungen für ein Spiel ---------- */
+function prefsSummary(r) {
+  const n = Object.keys(r.prefs || {}).length;
+  return n ? t('gp.custom', { n }) : t('gp.none');
+}
+async function viewRomPrefs(view, id) {
+  const r = await DB.get('roms', id);
+  if (!r) return go('#/library');
+  const s = sysById(r.system);
+  const p = r.prefs || {};
+  const imgs = await skinImgInfo(r.system);
+  const anyImg = imgs.p || imgs.q;
+  const skin = p.skin || 'auto';
+  const opt = (v, cur, label) => `<option value="${v}" ${String(cur) === String(v) ? 'selected' : ''}>${esc(label)}</option>`;
+  const ffCur = p.ff === undefined ? 'default' : p.ff, aiCur = p.autoMin === undefined ? 'default' : p.autoMin;
+  const rwCur = p.rewind === undefined ? 'default' : String(p.rewind), pmCur = p.padMode || 'default';
+  const canRw = REWIND_SYS.includes(r.system);
+  view.innerHTML = `${topbar('#/rom/' + id)}<h1 class="title-xl">${esc(t('gp.title'))}</h1>
+    <p class="tagline">${esc(t('gp.intro', { name: r.name }))}</p>
+    <h3 class="h3">${esc(t('gp.skin'))}</h3>
+    <div class="skin-grid">
+      ${skinCard('auto', skin === 'auto', t('gp.likeSys', { sys: s.name }))}
+      ${anyImg ? skinCard('bild', skin === 'bild', t('skin.bild'), `<img src="${anyImg.url}" alt="">`) : ''}
+      ${Pad.ALL_SKINS.map(k => skinCard(k, skin === k, t('skin.' + k))).join('')}
+    </div>
+    <h3 class="h3">${esc(t('set.play'))}</h3>
+    <div class="group">
+      <div class="row"><span class="ico" style="background:#e0a400">${ICON.ff}</span><span class="lbl">${esc(t('set.ffSpeed'))}</span>
+        <select class="select" id="gff">${opt('default', ffCur, t('gp.std', { v: fmtNum(Settings.get('ffSpeed')) + '×' }))}${[1.5, 2, 3, 4, 8].map(v => opt(v, ffCur, fmtNum(v) + '×')).join('')}</select></div>
+      <div class="row"><span class="ico" style="background:#2fb784">${ICON.timer}</span><span class="lbl">${esc(t('set.autoInt'))}</span>
+        <select class="select" id="gai">${opt('default', aiCur, t('gp.std', { v: Number(Settings.get('autosaveMin')) ? t('dur.min', { m: Settings.get('autosaveMin') }) : t('c.off') }))}${[0, 1, 3, 5, 10, 15].map(v => opt(v, aiCur, v ? t('dur.min', { m: v }) : t('c.off'))).join('')}</select></div>
+      <div class="row stack"><span class="ico" style="background:#8c5cff">${ICON.rewind}</span><span class="lbl">${esc(t('set.rewind'))}</span>
+        <div class="seg" id="grw">${[['default', t('gp.stdShort')], ['true', t('c.on')], ['false', t('c.off')]].map(([v, l]) => `<button data-v="${v}" aria-pressed="${rwCur === v}" ${canRw ? '' : 'disabled'}>${esc(l)}</button>`).join('')}</div>
+        ${canRw ? '' : `<span class="sub-below">${esc(t('gp.noRewind'))}</span>`}</div>
+      <div class="row stack"><span class="ico" style="background:#3a8ce0">${ICON.consoles}</span><span class="lbl">${esc(t('pad.onscreen'))}</span>
+        <div class="seg" id="gpm">${[['default', t('gp.stdShort')], ['auto', t('ctl.mode.auto')], ['on', t('ctl.mode.on')], ['off', t('ctl.mode.off')]].map(([v, l]) => `<button data-v="${v}" aria-pressed="${pmCur === v}">${esc(l)}</button>`).join('')}</div></div>
+    </div>
+    <div class="note" style="margin-top:16px">${esc(t('gp.note'))}</div>
+    <div class="group" style="margin-top:16px"><button class="row" id="greset"><span class="ico" style="background:#5a6b85">${ICON.refresh}</span><span class="lbl">${esc(t('gp.reset'))}</span></button></div>`;
+  bindBack(view);
+  const save = async (k, v) => {
+    const cur = await DB.get('roms', id);
+    const pr = Object.assign({}, cur.prefs || {});
+    if (v === 'default' || v === 'auto' && k === 'skin') delete pr[k]; else pr[k] = v;
+    if (Object.keys(pr).length) cur.prefs = pr; else delete cur.prefs;
+    await DB.put('roms', cur);
+    Sfx.toggle(true);
+  };
+  $$('.skin-card', view).forEach(b => b.onclick = () => { $$('.skin-card', view).forEach(x => x.setAttribute('aria-pressed', x === b)); save('skin', b.dataset.k); });
+  $('#gff').onchange = e => save('ff', e.target.value === 'default' ? 'default' : Number(e.target.value));
+  $('#gai').onchange = e => save('autoMin', e.target.value === 'default' ? 'default' : Number(e.target.value));
+  $$('#grw button').forEach(b => b.onclick = () => { $$('#grw button').forEach(x => x.setAttribute('aria-pressed', x === b)); save('rewind', b.dataset.v === 'default' ? 'default' : b.dataset.v === 'true'); });
+  $$('#gpm button').forEach(b => b.onclick = () => { $$('#gpm button').forEach(x => x.setAttribute('aria-pressed', x === b)); save('padMode', b.dataset.v); });
+  $('#greset').onclick = async () => { const cur = await DB.get('roms', id); delete cur.prefs; await DB.put('roms', cur); Sfx.ok(); toast(t('gp.resetDone')); render(); };
 }
 
 function viewLang(view) {
@@ -1140,6 +1488,8 @@ function viewAbout(view) {
     </div>
     <h3 class="h3">${esc(t('about.versions'))}</h3>
     <div class="group">
+      <div class="src-item"><b>1.4.1 – ${esc(fmtDate(new Date('2026-11-16T12:00:00').getTime()))}</b><span>${esc(t('ver.7'))}</span></div>
+      <div class="src-item"><b>1.4.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.6'))}</span></div>
       <div class="src-item"><b>1.3.1 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.5'))}</span></div>
       <div class="src-item"><b>1.3.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.4'))}</span></div>
       <div class="src-item"><b>1.2.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.3'))}</span></div>

@@ -114,3 +114,99 @@
   .kpad-edit { width: min(360px, calc(100% - 300px)); padding: 8px 10px 10px; }
   .kpad-edit p { display: none; }
 }
+
+/* ---------- Gehäuse-Skins (eigene Entwürfe) ---------- */
+[data-skin="kreide"] {
+  --g-1: #f4f2ed; --g-2: #dad6cc; --g-ink: rgba(70, 64, 56, 0.34); --g-well: rgba(60, 50, 40, 0.1);
+  --b-bg: #3d4351; --b-hi: #5d6576; --b-lo: #22262f; --b-fg: #e8ebf1; --b-on-fg: #fff;
+  --d-bg: #3a3f4b; --d-lo: #1e2128; --d-fg: #959cab; --p-bg: #bbb7ad; --p-fg: #4a463f; --k-bg: #3d4351; --s-bg: rgba(60, 50, 40, 0.12);
+}
+[data-skin="kobalt"] {
+  --g-1: #3159cc; --g-2: #1c3994; --g-ink: rgba(255, 255, 255, 0.3); --g-well: rgba(0, 8, 50, 0.28);
+  --b-bg: #eef1f9; --b-hi: #ffffff; --b-lo: #aab4d6; --b-fg: #1d3a96; --b-on-fg: #1d3a96;
+  --d-bg: #e7ebf6; --d-lo: #9ea9cf; --d-fg: #3c5bb8; --p-bg: #17318a; --p-fg: #cdd7ff; --k-bg: #eef1f9; --s-bg: rgba(0, 8, 50, 0.3);
+}
+[data-skin="koralle"] {
+  --g-1: #f37e66; --g-2: #d65840; --g-ink: rgba(95, 22, 10, 0.32); --g-well: rgba(85, 15, 5, 0.2);
+  --b-bg: #fff0de; --b-hi: #fffaf3; --b-lo: #d5b998; --b-fg: #c2432c; --b-on-fg: #c2432c;
+  --d-bg: #4b2b25; --d-lo: #281410; --d-fg: #c9988c; --p-bg: #b5412b; --p-fg: #ffe8db; --k-bg: #fff0de; --s-bg: rgba(85, 15, 5, 0.22);
+}
+[data-skin="graphit"] {
+  --g-1: #363840; --g-2: #1d1e23; --g-ink: rgba(255, 255, 255, 0.17); --g-well: rgba(0, 0, 0, 0.38);
+  --b-bg: #ff8a1f; --b-hi: #ffb35f; --b-lo: #b45806; --b-fg: #2a1500; --b-on-fg: #2a1500;
+  --d-bg: #18191d; --d-lo: #040405; --d-fg: #6d707a; --p-bg: #4b4d56; --p-fg: #d8dae0; --k-bg: #ff8a1f; --s-bg: rgba(0, 0, 0, 0.4);
+}
+[data-skin="salbei"] {
+  --g-1: #adc5a7; --g-2: #87a481; --g-ink: rgba(28, 48, 28, 0.34); --g-well: rgba(20, 40, 20, 0.17);
+  --b-bg: #2f4a3a; --b-hi: #4c6d58; --b-lo: #182a1f; --b-fg: #e5eedf; --b-on-fg: #fff;
+  --d-bg: #2f4a3a; --d-lo: #182a1f; --d-fg: #8fae95; --p-bg: #6d8a67; --p-fg: #f1f6ed; --k-bg: #2f4a3a; --s-bg: rgba(20, 40, 20, 0.2);
+}
+[data-skin="mitternacht"] {
+  --g-1: #3b307d; --g-2: #231b52; --g-ink: rgba(255, 201, 74, 0.34); --g-well: rgba(5, 2, 25, 0.35);
+  --b-bg: #ffc94a; --b-hi: #ffe293; --b-lo: #bd8c10; --b-fg: #2b1d00; --b-on-fg: #2b1d00;
+  --d-bg: #19133f; --d-lo: #07051a; --d-fg: #8e83d0; --p-bg: #534899; --p-fg: #ece8ff; --k-bg: #ffc94a; --s-bg: rgba(5, 2, 25, 0.38);
+}
+
+/* Gehäuse hinter Spielbild und Tasten */
+.kbody { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.kbody[hidden] { display: none !important; }
+.kbody[data-kind="body"] {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .16 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background: var(--grain), linear-gradient(var(--g-1), var(--g-2));
+}
+.kbody[data-kind="body"][data-o="p"] { top: var(--gh); border-radius: 26px 26px 0 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 -6px 18px rgba(0, 0, 0, 0.35); }
+.kbody[data-kind="body"][data-o="q"] { left: calc(-1 * env(safe-area-inset-left, 0px)); right: calc(-1 * env(safe-area-inset-right, 0px)); top: -50px; }
+.kbody .kb-mark {
+  position: absolute; left: 50%; top: 16px; transform: translateX(-50%);
+  font: 800 11px/1 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.32em; color: var(--g-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18); white-space: nowrap;
+}
+.kbody[data-o="q"] .kb-mark { display: none; }
+.kbody[data-kind="img"] { background: #000; }
+.kbody[data-kind="img"] img { position: absolute; display: block; object-fit: fill; user-select: none; -webkit-user-drag: none; }
+
+/* Tasten im Gehäuse: Kunststoff mit Tiefe */
+.kpad[data-body] .pc { opacity: 1; }
+.kpad[data-body] .pc.kb {
+  border: 0; color: var(--b-fg);
+  background: radial-gradient(120% 120% at 32% 24%, var(--b-hi) 0%, var(--b-bg) 46%, var(--b-lo) 100%);
+  box-shadow: 0 0 0 calc(var(--sz) * 0.085) var(--g-well), 0 calc(var(--sz) * 0.06) 0 var(--b-lo), 0 calc(var(--sz) * 0.1) calc(var(--sz) * 0.18) rgba(0, 0, 0, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.kpad[data-body] .pc.kb.on {
+  color: var(--b-on-fg); background: radial-gradient(120% 120% at 32% 24%, var(--b-bg) 0%, var(--b-lo) 100%);
+  transform: translate(-50%, calc(-50% + var(--sz) * 0.045)) scale(0.97);
+  box-shadow: 0 0 0 calc(var(--sz) * 0.085) var(--g-well), 0 1px 0 var(--b-lo), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 2px 6px rgba(0, 0, 0, 0.22);
+}
+.kpad[data-body] .pc.k-pill, .kpad[data-body] .pc.k-sh {
+  background: linear-gradient(var(--p-bg), color-mix(in srgb, var(--p-bg) 82%, #000)); color: var(--p-fg); text-shadow: none;
+  box-shadow: 0 0 0 calc(var(--sz) * 0.05) var(--g-well), 0 2px 0 color-mix(in srgb, var(--p-bg) 60%, #000), 0 4px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.kpad[data-body] .pc.k-pill.on, .kpad[data-body] .pc.k-sh.on { background: color-mix(in srgb, var(--p-bg) 80%, #000); color: var(--p-fg); }
+.kpad[data-body] .pc.dpad::before {
+  content: ""; position: absolute; inset: -5%; border-radius: 50%; z-index: -1;
+  background: var(--g-well); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.22), 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.kpad[data-body] .dpad .arm { border: 0; border-radius: 9px; background: var(--d-bg); box-shadow: 0 calc(var(--sz) * 0.025) 0 var(--d-lo), 0 calc(var(--sz) * 0.05) calc(var(--sz) * 0.08) rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+.kpad[data-body] .dpad .arm.v::after { left: 0; right: 0; top: 30%; bottom: 30%; background: var(--d-bg); }
+.kpad[data-body] .dpad .arm.v::before {
+  content: ""; position: absolute; z-index: 1; left: 50%; top: 50%; width: 52%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, 0.28), transparent 70%);
+}
+.kpad[data-body] .dpad .ar { z-index: 2; opacity: 0.7; }
+.kpad[data-body] .pc.stick { border: 0; background: var(--g-well); box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.2); }
+.kpad[data-body] .stick .knob { background: radial-gradient(circle at 35% 30%, var(--b-hi), var(--b-bg) 55%, var(--b-lo)); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4); }
+.kpad[data-body] [data-c="rw"] { --b-bg: var(--p-bg); --b-hi: color-mix(in srgb, var(--p-bg) 70%, #fff); --b-lo: color-mix(in srgb, var(--p-bg) 70%, #000); --b-fg: var(--p-fg); --b-on-fg: var(--p-fg); }
+
+/* Eigenes Skin-Bild: Tasten als unsichtbare Berührungsflächen */
+.kpad.ghost .pc { opacity: 1; }
+.kpad.ghost .pc.kb, .kpad.ghost .dpad .arm, .kpad.ghost .pc.stick {
+  background: transparent !important; border-color: transparent !important; box-shadow: none !important; color: transparent !important; text-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+.kpad.ghost .dpad .arm.v::after { background: transparent !important; }
+.kpad.ghost .dpad .ar { opacity: 0 !important; }
+.kpad.ghost .stick .knob { opacity: 0.35; }
+.kpad.ghost .pc.kb.on { background: rgba(255, 255, 255, 0.24) !important; }
+.kpad.ghost .dpad.u .ar.u, .kpad.ghost .dpad.d .ar.d, .kpad.ghost .dpad.l .ar.l, .kpad.ghost .dpad.r .ar.r { opacity: 0.6 !important; }
+.kpad.ghost.editing .pc { background: rgba(255, 201, 74, 0.12) !important; }

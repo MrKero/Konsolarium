@@ -1,6 +1,6 @@
 /* Konsolarium – gemeinsame Grundfunktionen (App + Spieler) */
 
-const APP = { name: 'Konsolarium', version: '1.3.1', date: '2026-11-15', ejs: '4.2.3', author: 'Kerem' };
+const APP = { name: 'Konsolarium', version: '1.4.1', date: '2026-11-16', ejs: '4.2.3', author: 'Kerem' };
 
 /* ---------- Einstellungen ---------- */
 const Settings = (() => {
@@ -9,7 +9,8 @@ const Settings = (() => {
     lang: null, theme: 'auto', bg: 'vitrine', icon: 'cart',
     gameSound: true, clicks: true, autoUpdate: true, autosave: true,
     ffSpeed: 2, sortSys: 'old', sortLib: 'recent', cores: {}, offlineDone: false,
-    autosaveMin: 5, rewind: true, padSkin: 'konsolarium', padOpacity: 0.85, padScale: 1, padMode: 'auto', padLayouts: {}
+    autosaveMin: 5, rewind: true, padSkin: 'konsolarium', padOpacity: 0.85, padScale: 1, padMode: 'auto', padLayouts: {},
+    padSkinBySys: {}, padImgButtons: false, gestures: true
   };
   let data;
   try { data = Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || '{}')); }
@@ -268,6 +269,94 @@ const LAB_FILES = [
 const OFFLINE_FILES = CORE_FILES.map(f => [CORE_CACHE, 'emulatorjs/cores/' + f])
   .concat(LAB_FILES.map(f => [LAB_CACHE, 'labs/' + f]));
 const CORE_TOTAL_MB = 98;
+
+/* Zurückspulen kostet Rechenzeit – nur für Konsolen mit kleinen Speicherständen */
+const REWIND_SYS = ['nes', 'gb', 'gbc', 'gba', 'snes', 'segaMS', 'segaGG', 'segaMD', 'sega32x', 'pce', 'atari2600', 'atari7800', 'lynx', 'ngp', 'ws', 'vb', 'coleco', 'a5200'];
+
+/* Spielzeit je Tag für die Statistik (die letzten 120 Tage, lokale Zeit) */
+function dayKey(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function playDays() { try { return JSON.parse(localStorage.getItem('ks.playDays') || '{}') || {}; } catch (e) { return {}; } }
+function logPlayDay(ms) {
+  try {
+    const o = playDays(), k = dayKey();
+    o[k] = (o[k] || 0) + ms;
+    const keys = Object.keys(o).sort();
+    while (keys.length > 120) delete o[keys.shift()];
+    localStorage.setItem('ks.playDays', JSON.stringify(o));
+  } catch (e) { /* egal */ }
+}
+
+/* Dateigrößen der Emulatoren (wird von tools/build.js aktualisiert) */
+/* SIZES:START */
+const FILE_SIZES = {"emulatorjs/cores/a5200-legacy-wasm.data":880582,"emulatorjs/cores/beetle_vb-legacy-wasm.data":857641,"emulatorjs/cores/cap32-legacy-wasm.data":1018339,"emulatorjs/cores/desmume2015-wasm.data":1043573,"emulatorjs/cores/dosbox_pure-thread-legacy-wasm.data":1792195,"emulatorjs/cores/fbneo-legacy-wasm.data":8272960,"emulatorjs/cores/fceumm-legacy-wasm.data":1053006,"emulatorjs/cores/fuse-legacy-wasm.data":1218410,"emulatorjs/cores/gambatte-legacy-wasm.data":967022,"emulatorjs/cores/gearcoleco-legacy-wasm.data":891769,"emulatorjs/cores/genesis_plus_gx-legacy-wasm.data":1204803,"emulatorjs/cores/handy-legacy-wasm.data":862944,"emulatorjs/cores/mednafen_ngp-legacy-wasm.data":872066,"emulatorjs/cores/mednafen_pce-legacy-wasm.data":995095,"emulatorjs/cores/mednafen_wswan-legacy-wasm.data":879089,"emulatorjs/cores/melonds-wasm.data":1194723,"emulatorjs/cores/mgba-legacy-wasm.data":1054993,"emulatorjs/cores/mupen64plus_next-wasm.data":1451795,"emulatorjs/cores/nestopia-legacy-wasm.data":1218931,"emulatorjs/cores/opera-legacy-wasm.data":853889,"emulatorjs/cores/parallel_n64-legacy-wasm.data":1027660,"emulatorjs/cores/pcsx_rearmed-wasm.data":1039627,"emulatorjs/cores/picodrive-legacy-wasm.data":1035609,"emulatorjs/cores/ppsspp-assets.zip":10873836,"emulatorjs/cores/ppsspp-thread-wasm.data":4581537,"emulatorjs/cores/prosystem-legacy-wasm.data":852780,"emulatorjs/cores/puae-legacy-wasm.data":4138844,"emulatorjs/cores/smsplus-legacy-wasm.data":855316,"emulatorjs/cores/snes9x-legacy-wasm.data":1092437,"emulatorjs/cores/stella2014-legacy-wasm.data":1051741,"emulatorjs/cores/vice_x64sc-legacy-wasm.data":1523390,"emulatorjs/cores/virtualjaguar-legacy-wasm.data":943525,"emulatorjs/cores/yabause-legacy-wasm.data":990428,"labs/3ds/azahar.js":569930,"labs/3ds/azahar.wasm":10966231,"labs/3ds/azahar_webgl2.js":600337,"labs/3ds/azahar_webgl2.wasm":11416552,"labs/dolphin/cores/dolphin/dolphin-core-upstream.js":266970,"labs/dolphin/cores/dolphin/dolphin-core-upstream.wasm":15175335,"labs/ps2/Play.js":206594,"labs/ps2/Play.wasm":2211610};
+/* SIZES:END */
+
+/* Emulatoren zum Verwalten: ein Eintrag je Emulator-Kern bzw. Labor-Emulator */
+function emulatorPacks() {
+  const packs = [];
+  const seen = {};
+  SYSTEMS.forEach(s => {
+    if (s.lab) {
+      if (!seen['lab:' + s.lab]) {
+        seen['lab:' + s.lab] = { id: 'lab:' + s.lab, name: s.cores[0].name, systems: [], files: LAB_FILES.filter(f => f.startsWith(s.lab + '/')).map(f => [LAB_CACHE, 'labs/' + f]) };
+        packs.push(seen['lab:' + s.lab]);
+      }
+      seen['lab:' + s.lab].systems.push(s);
+      return;
+    }
+    if (!s.ejs) return;
+    (s.cores || []).forEach(c => {
+      const files = CORE_FILES.filter(f => f.startsWith(c.id + '-')).map(f => [CORE_CACHE, 'emulatorjs/cores/' + f]);
+      if (!files.length) return;
+      if (!seen[c.id]) { seen[c.id] = { id: c.id, name: c.name, systems: [], files }; packs.push(seen[c.id]); }
+      if (!seen[c.id].systems.includes(s)) seen[c.id].systems.push(s);
+    });
+  });
+  packs.forEach(p => { p.bytes = p.files.reduce((n, f) => n + (FILE_SIZES[f[1]] || 0), 0); p.year = Math.min(...p.systems.map(s => s.year)); });
+  return packs.sort((a, b) => a.year - b.year || a.name.localeCompare(b.name));
+}
+async function packStatus(pack) {
+  if (!('caches' in window)) return false;
+  for (const [cn, url] of pack.files) { const c = await caches.open(cn); if (!(await c.match(absUrl(url)))) return false; }
+  return true;
+}
+async function packLoad(pack, onBytes) {
+  for (const [cn, url] of pack.files) {
+    const c = await caches.open(cn);
+    if (await c.match(absUrl(url))) continue;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(url + ': HTTP ' + r.status);
+    await c.put(absUrl(url), r);
+    if (onBytes) onBytes(FILE_SIZES[url] || 0);
+  }
+}
+async function packDelete(pack) {
+  for (const [cn, url] of pack.files) { const c = await caches.open(cn); await c.delete(absUrl(url)); }
+  Settings.set('offlineAll', false);
+}
+
+/* Eigene Skin-Bilder je Konsole und Ausrichtung – eigene kleine Datenbank */
+const SkinStore = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('ks-skins', 1);
+    r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('skins')) r.result.createObjectStore('skins', { keyPath: 'id' }); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const run = async (mode, fn) => { const d = await open(); return new Promise((res, rej) => { const tx = d.transaction('skins', mode); const q = fn(tx.objectStore('skins')); tx.oncomplete = () => res(q && q.result); tx.onerror = () => rej(tx.error); }); };
+  return {
+    get: (sys, o) => run('readonly', s => s.get(sys + '|' + o)),
+    put: (sys, o, blob, extra) => run('readwrite', s => s.put(Object.assign({ id: sys + '|' + o, sys, o, blob, added: Date.now() }, extra || {}))),
+    async setHide(sys, hide) {
+      for (const o of ['p', 'q']) { const r = await SkinStore.get(sys, o); if (r) { r.hide = !!hide; await run('readwrite', s => s.put(r)); } }
+    },
+    del: (sys, o) => run('readwrite', s => s.delete(sys + '|' + o)),
+    all: () => run('readonly', s => s.getAll())
+  };
+})();
 
 function absUrl(u) { return new URL(u, location.href).href; }
 async function cacheAllCores(onProgress) {

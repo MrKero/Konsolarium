@@ -19,11 +19,20 @@ Mit ❤️ gemacht von Kerem.
 - **Speicherstände benennen**, **Spielzeit** je Spiel (auch in den Labor-Emulatoren), **Weiterspielen**-Reihe auf der Startseite
 - **Cover**: eigenes Bild je Spiel (Fotos/Dateien) oder mehrere Bilder auf einmal importieren – der Dateiname muss wie das Spiel heißen
 - **Bildschirmfotos** pixelgenau vergrößert in Fotos sichern
+- **Gehäuse-Skins (ab 1.4.0):** 6 eigene Entwürfe im Handheld-Stil (Kreide, Kobalt, Koralle, Graphit, Salbei, Mitternacht) mit plastischen Tasten – Spielbild oben, Gehäuse darunter bzw. seitlich im Querformat
+- **Eigene Skin-Bilder:** je Konsole ein Bild für Hoch- und Querformat, Tasten wahlweise unsichtbar und frei auf das Bild verschiebbar
+- **Skin je Konsole und je Spiel**
+- **Gesten mit zwei Fingern:** nach rechts wischen = Vorspulen, nach links wischen und halten = Zurückspulen, zweimal tippen = Schnellspeichern
+- **Zwei Spieler** (bis vier) mit Bluetooth-Controllern, Zuordnung im Spielmenü
+- **Einstellungen pro Spiel:** Skin, Vorspul-Tempo, Autospeichern, Zurückspulen, Bildschirmtasten
+- **Emulatoren verwalten:** einzeln laden oder löschen, Speicherbedarf je Emulator
+- **Anleitung (ab 1.4.1):** alle Funktionen kurz erklärt, als aufklappbare Themen in den Einstellungen
+- **Statistik:** Gesamtspielzeit, letzte 14 Tage, meistgespielte Spiele und Konsolen, Speicher
 - **Vorspulen** mit 1,5× bis 8×
 - **Cheats** (GameShark, Action Replay, Game Genie usw.) in den Einstellungen und direkt im Spiel
 - Hoch- und Querformat, Zoomen deaktiviert
 - **Einstellungen**: Spielton und Klicksounds, 6 Hintergründe, 5 App-Icons, Dunkelmodus (System/Hell/Dunkel), 13 Sprachen mit Flaggen, Datenschutz, Quellenangaben, Auto-Update (abschaltbar) plus manuelle Prüfung, Über-Seite, App zurücksetzen mit Sicherheits-Timer
-- **Offline**: Service Worker hält App und alle Emulator-Kerne (ca. 56 MB) bereit
+- **Offline**: Service Worker hält die App bereit; Emulatoren werden beim ersten Spielstart geladen oder unter „Emulatoren verwalten“ vorab (einzeln oder alle)
 
 ## Konsolen
 
