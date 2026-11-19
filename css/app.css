@@ -130,6 +130,13 @@ svg { display: block; }
 [data-bg="plain"] #bg { background: var(--bg); }
 
 /* ---------- Grundlayout ---------- */
+/* Feste App-Hülle: nur #scroller scrollt. Dadurch steht die Tableiste auf jeder Seite
+   an derselben Stelle (iOS verschiebt feste Elemente sonst je nach Seitenlänge). */
+html, body { overflow: hidden; overscroll-behavior: none; }
+#scroller {
+  position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
+}
 #view {
   min-height: 100%;
   padding: calc(var(--safe-t) + 14px) calc(var(--safe-r) + 18px) calc(var(--tabbar-h) + var(--safe-b) + 28px) calc(var(--safe-l) + 18px);
@@ -193,19 +200,23 @@ svg { display: block; }
   -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent);
   padding-bottom: 14px;
 }
-.year { display: grid; grid-template-columns: 62px 1fr; gap: 0 12px; position: relative; }
+/* Zeitleiste: eine durchgehende Linie in gleichmäßiger Farbe; Kreis und Jahreszahl
+   sitzen exakt mittig auf der Linie (Spalte 62 px → Mitte bei 31 px). */
+.year { --tl-x: 31px; display: grid; grid-template-columns: 62px 1fr; gap: 0 12px; position: relative; }
 .year::before {
-  content: ""; position: absolute; inset-inline-start: 22px; top: 0; bottom: 0; width: 3px; border-radius: 2px;
-  background: linear-gradient(var(--dc), color-mix(in srgb, var(--dc) 50%, transparent));
-  opacity: 0.55;
+  content: ""; position: absolute; inset-inline-start: calc(var(--tl-x) - 1.5px); top: 0; bottom: 0; width: 3px;
+  background: color-mix(in srgb, var(--dc) 42%, transparent);
 }
-.year-mark { position: relative; padding-top: 18px; }
+.year-mark { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 18px; }
 .year-mark::before {
-  content: ""; position: absolute; inset-inline-start: 16px; top: 22px; width: 15px; height: 15px; border-radius: 50%;
-  background: var(--bg); border: 3px solid var(--dc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--dc) 20%, transparent);
+  content: ""; box-sizing: border-box; display: block; width: 20px; height: 20px; border-radius: 50%; flex: none;
+  background: var(--bg); border: 3.5px solid var(--dc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--dc) 20%, transparent);
+  position: relative; z-index: 1;
 }
 .year-mark span {
-  display: block; margin-top: 22px; margin-inline-start: 2px; font-weight: 800; font-size: 15px; color: var(--dc);
+  position: relative; z-index: 1; display: block; margin-top: 6px; padding: 3px 6px; border-radius: 8px; text-align: center;
+  font-weight: 800; font-size: 15px; line-height: 1.1; color: var(--dc);
+  background: color-mix(in srgb, var(--bg) 86%, var(--dc));
   font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
 }
 .year-cards { display: grid; gap: 12px; padding: 10px 0; grid-template-columns: 1fr; }

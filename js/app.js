@@ -1,5 +1,8 @@
 /* Konsolarium – Hauptoberfläche */
 
+/* Scroll-Container der App: die Seite selbst scrollt nie, so bleibt die Tableiste ruhig */
+const SCR = () => document.getElementById('scroller') || document.scrollingElement;
+
 const ICON = {
   consoles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4"/><circle cx="16" cy="11.5" r="1" fill="currentColor"/><circle cx="18" cy="13.8" r="1" fill="currentColor"/></svg>',
   library: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="M8 13h8"/></svg>',
@@ -83,7 +86,7 @@ function renderTabbar() {
     Sfx.tap();
     const k = b.dataset.tab;
     if (tabFor(location.hash) === k && location.hash !== '#/' + k) { go('#/' + k); return; }
-    if (location.hash === '#/' + k) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (location.hash === '#/' + k) { SCR().scrollTo({ top: 0, behavior: 'smooth' }); return; }
     go('#/' + k);
   });
 }
@@ -91,7 +94,7 @@ function renderTabbar() {
 let lastHash = '';
 async function render() {
   const hash = location.hash || '#/systems';
-  if (lastHash) UI.scroll[lastHash] = window.scrollY;
+  if (lastHash) UI.scroll[lastHash] = SCR().scrollTop;
   const view = $('#view');
   renderTabbar();
   let m;
@@ -122,7 +125,7 @@ async function render() {
   }
   if (hash !== lastHash) {
     view.classList.remove('page-enter'); void view.offsetWidth; view.classList.add('page-enter');
-    window.scrollTo(0, UI.scroll[hash] || 0);
+    SCR().scrollTop = UI.scroll[hash] || 0;
   }
   lastHash = hash;
 }
@@ -1535,6 +1538,7 @@ function viewAbout(view) {
     </div>
     <h3 class="h3">${esc(t('about.versions'))}</h3>
     <div class="group">
+      <div class="src-item"><b>1.5.1 – ${esc(fmtDate(new Date('2026-11-19T12:00:00').getTime()))}</b><span>${esc(t('ver.9'))}</span></div>
       <div class="src-item"><b>1.5.0 – ${esc(fmtDate(new Date('2026-11-16T13:00:00').getTime()))}</b><span>${esc(t('ver.8'))}</span></div>
       <div class="src-item"><b>1.4.1 – ${esc(fmtDate(new Date('2026-11-16T12:00:00').getTime()))}</b><span>${esc(t('ver.7'))}</span></div>
       <div class="src-item"><b>1.4.0 – ${esc(fmtDate(new Date('2026-11-15T12:00:00').getTime()))}</b><span>${esc(t('ver.6'))}</span></div>
