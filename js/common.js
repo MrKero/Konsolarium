@@ -1,6 +1,6 @@
 /* Konsolarium – gemeinsame Grundfunktionen (App + Spieler) */
 
-const APP = { name: 'Konsolarium', version: '1.5.1', date: '2026-11-19', ejs: '4.2.3', author: 'Kerem' };
+const APP = { name: 'Konsolarium', version: '1.5.2', date: '2026-11-19', ejs: '4.2.3', author: 'Kerem' };
 
 /* ---------- Einstellungen ---------- */
 const Settings = (() => {

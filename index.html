@@ -14,18 +14,37 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-cart-192.png">
   <link rel="apple-touch-icon" href="icons/icon-cart-180.png">
-  <link rel="stylesheet" href="css/app.css?v=1.5.1">
-  <link rel="stylesheet" href="css/pad.css?v=1.5.1">
+  <link rel="stylesheet" href="css/app.css?v=1.5.2">
+  <link rel="stylesheet" href="css/pad.css?v=1.5.2">
 </head>
-<body>
+<body class="shell">
+  <script>
+    /* Echte Bildschirmhöhe: Als Home-Bildschirm-App meldet iOS 26 eine zu kurze Höhe
+       (unten bleibt sonst ein Streifen frei und die Tableiste sitzt zu hoch). */
+    (function () {
+      var fit = function () {
+        var h = window.innerHeight;
+        var standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+        if (standalone && window.screen) {
+          var land = matchMedia('(orientation: landscape)').matches;
+          var sh = land ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+          if (sh > h && sh - h < 120) h = sh;
+        }
+        document.documentElement.style.setProperty('--app-h', h + 'px');
+      };
+      fit();
+      window.addEventListener('resize', fit);
+      window.addEventListener('orientationchange', function () { setTimeout(fit, 300); });
+    })();
+  </script>
   <div id="scroller"><main id="view" aria-live="polite"></main></div>
   <nav id="tabbar" aria-label="Navigation"></nav>
-  <script src="js/i18n.js?v=1.5.1"></script>
-  <script src="js/common.js?v=1.5.1"></script>
-  <script src="js/backup.js?v=1.5.1"></script>
-  <script src="js/systems.js?v=1.5.1"></script>
-  <script src="js/art.js?v=1.5.1"></script>
-  <script src="js/pad.js?v=1.5.1"></script>
-  <script src="js/app.js?v=1.5.1"></script>
+  <script src="js/i18n.js?v=1.5.2"></script>
+  <script src="js/common.js?v=1.5.2"></script>
+  <script src="js/backup.js?v=1.5.2"></script>
+  <script src="js/systems.js?v=1.5.2"></script>
+  <script src="js/art.js?v=1.5.2"></script>
+  <script src="js/pad.js?v=1.5.2"></script>
+  <script src="js/app.js?v=1.5.2"></script>
 </body>
 </html>

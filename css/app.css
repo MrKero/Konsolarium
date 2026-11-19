@@ -137,6 +137,11 @@ html, body { overflow: hidden; overscroll-behavior: none; }
   position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto;
   -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
 }
+/* App-Hülle in voller Bildschirmhöhe. Alles, was sonst „fixed“ wäre, sitzt absolut in dieser Hülle –
+   iOS 26 zeichnet feste Elemente nicht bis zum unteren Rand, absolute schon. */
+body.shell { position: relative; height: var(--app-h, 100%); min-height: 100%; }
+body.shell #scroller, body.shell #bg, body.shell .overlay, body.shell .kerem-layer { position: absolute; }
+body.shell #tabbar, body.shell #toast { position: absolute; }
 #view {
   min-height: 100%;
   padding: calc(var(--safe-t) + 14px) calc(var(--safe-r) + 18px) calc(var(--tabbar-h) + var(--safe-b) + 28px) calc(var(--safe-l) + 18px);
@@ -429,7 +434,7 @@ button.row:active, a.row:active { background: var(--surface2); }
 
 /* ---------- Tableiste: schwebende Glas-Kapsel ---------- */
 #tabbar {
-  position: fixed; z-index: 20; left: 50%; bottom: max(12px, calc(var(--safe-b) - 6px)); transform: translateX(-50%);
+  position: fixed; z-index: 20; left: 50%; bottom: max(10px, calc(var(--safe-b) - 12px)); transform: translateX(-50%);
   width: min(calc(100% - var(--safe-l) - var(--safe-r) - 28px), 460px);
   padding: 5px; border-radius: 999px;
   background: color-mix(in srgb, var(--bg) 52%, transparent);
